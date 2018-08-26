@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint
 import serial
 import sys
 import time
