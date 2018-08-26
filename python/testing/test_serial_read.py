@@ -21,7 +21,7 @@ if __name__ == '__main__':
             msg = ser.readline()
 
             msg_decoded = msg.decode().rstrip('\r\n')
-            logger.debug('msg_decoded: ' + msg)
+            logger.debug('msg_decoded: ' + msg_decoded)
 
             # Rebroadcast message for remote units (repeater function)
             ser.write(msg)
