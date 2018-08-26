@@ -25,10 +25,8 @@ if __name__ == '__main__':
             #logger.debug('msg_decoded: ' + msg_decoded)
             pprint(msg)
 
-            message = [line.decode() for line in msg]
-
             # Rebroadcast message for remote units (repeater function)
-            for line in message:
+            for line in msg:
                 ser.write(line)
             logger.debug('Rebroadcasted message.')
 
