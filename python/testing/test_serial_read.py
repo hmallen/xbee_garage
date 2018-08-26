@@ -24,6 +24,7 @@ if __name__ == '__main__':
             logger.debug('msg_decoded: ' + msg_decoded)
 
             # Rebroadcast message for remote units (repeater function)
+            logger.debug('Rebroadcasting received message.')
             ser.write(msg)
 
         time.sleep(0.01)
