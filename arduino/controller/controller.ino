@@ -92,9 +92,11 @@ void loop() {
   }
 
   if (digitalRead(rangeTestPin) == HIGH) {
-    while (digitalRead(rangeTestPin) == HIGH) delay(5);
+    while (digitalRead(rangeTestPin) == HIGH) {
+      delay(5);
+    }
+    rangeTest();
   }
-  rangeTest();
 }
 
 void processCommand(String command) {
