@@ -13,7 +13,8 @@ ser = serial.Serial(
 if __name__ == '__main__':
     while (True):
         if ser.in_waiting > 0:
-            msg = ser.read()
+            msg = ser.readline()
             print(msg)
+            message = msg.encode('utf-8')
 
         time.sleep(0.01)
