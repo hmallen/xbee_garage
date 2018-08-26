@@ -19,7 +19,8 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             # Receive, decode, and strip trailing \r\n from incoming message
             msg = ser.read()
-            logger.debug('msg (decoded): ' + msg.decode().rstrip('\r\n'))
+            msg_decoded = msg.decode().rstrip('\r\n')
+            logger.debug('msg_decoded: ' + msg_decoded)
 
             # Rebroadcast message for remote units (repeater function)
             ser.write(msg)
