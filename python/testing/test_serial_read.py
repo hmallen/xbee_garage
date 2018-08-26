@@ -15,7 +15,7 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             msg = ser.readline()
             print(msg)
-            message = msg.decode()
+            message = msg.decode().rstrip('\r\n')
             print(message)
 
         time.sleep(0.01)
