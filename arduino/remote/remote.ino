@@ -9,8 +9,10 @@
 //#define buzzerPin 9
 
 const byte alarmCycles = 3;
+const int heartbeatTimeout = 30000;
 
 bool doorAlarm = false;
+unsigned long heartbeatLast = 0;
 
 SoftwareSerial XBee(xbeeRx, xbeeTx);
 
@@ -67,7 +69,7 @@ void loop() {
   }
 
   if (doorAlarm == true) {
-    ledAlarm(alarmCycles);
+    ledAlarm("door", alarmCycles);
 
     if (digitalRead(alarmButton) == LOW) {
       Serial.println(F("Alarm disabled."));
@@ -78,6 +80,8 @@ void loop() {
       delay(100);
     }
   }
+
+  if ((millis() - heartbeatLast) > heartbeatTimeout) ledAlarm("heartbeat", alarmCycles);
 
   delay(100);
 }
@@ -101,6 +105,13 @@ void processMessage(String command) {
     }
     else displayError("Invalid ACTION encountered while processing ALARM command.");
   }
+  else if (identifier == 'H') {
+    if (action == 'B') {
+      ledHeartbeat();
+      heartbeatLast = millis();
+    }
+    else displayError("Invalid ACTION encountered while processing HEARTBEAT command.");
+  }
   else displayError("Invalid IDENTIFIER encountered while processing command.");
 }
 
@@ -108,18 +119,35 @@ void acknowledgeAlert() {
   XBee.println(F("@AK^"));
 }
 
-void ledAlarm(byte cycles) {
-  for (byte x = 0; x < cycles; x++) {
-    digitalWrite(ledRed, HIGH);
-    delay(100);
-    digitalWrite(ledRed, LOW);
-    digitalWrite(ledGreen, HIGH);
-    delay(100);
-    digitalWrite(ledGreen, LOW);
-    digitalWrite(ledBlue, HIGH);
-    delay(100);
-    digitalWrite(ledBlue, LOW);
+void ledHeartbeat() {
+  digitalWrite(ledGreen, HIGH);
+  delay(50);
+  digitalWrite(ledGreen, LOW);
+}
+
+void ledAlarm(String alarmType, byte cycles) {
+  if (alarmType == "door") {
+    for (byte x = 0; x < cycles; x++) {
+      digitalWrite(ledRed, HIGH);
+      delay(100);
+      digitalWrite(ledRed, LOW);
+      digitalWrite(ledGreen, HIGH);
+      delay(100);
+      digitalWrite(ledGreen, LOW);
+      digitalWrite(ledBlue, HIGH);
+      delay(100);
+      digitalWrite(ledBlue, LOW);
+    }
   }
+  else if (alarmType == "heartbeat") {
+    for (byte x = 0; x < cycles; x++) {
+      delay(100);
+      digitalWrite(ledRed, HIGH);
+      delay(100);
+      digitalWrite(ledRed, LOW);
+    }
+  }
+  else displayError("Unrecognized alarm type passed to ledAlarm().");
 }
 
 void displayError(String errorMessage) {
