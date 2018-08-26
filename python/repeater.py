@@ -20,11 +20,13 @@ if __name__ == '__main__':
             # Receive, decode, and strip trailing \r\n from incoming message
             #msg = ser.readline()
             msg = ser.readlines()
-            msg_decoded = msg.decode().rstrip('\r\n')
-            logger.debug('msg_decoded: ' + msg_decoded)
+            #msg_decoded = msg.decode().rstrip('\r\n')
+            #logger.debug('msg_decoded: ' + msg_decoded)
+            pprint(msg)
 
             # Rebroadcast message for remote units (repeater function)
-            ser.write(msg)
+            for line in msg:
+                ser.write(line)
             logger.debug('Rebroadcasted message.')
 
         time.sleep(0.01)
