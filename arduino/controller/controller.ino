@@ -44,31 +44,13 @@ void setup() {
   Serial.begin(9600);
   XBee.begin(9600);
 
-  // Flush any characters that may be in the XBee serial receive buffer
-  flushBuffer(true);
-
-  //Serial.println(F("Setup complete. Ready for command."));
+  flushBuffer(true);  // Flush any characters that may be in XBee receive buffer
 }
 
 void loop() {
   /*
-     Wait for command to be received by XBee
-
-     Commands:
-     ex. "@-D-O-^"
-     1) Start Character
-        '@' - Identifies beginning of incoming command string
-     2) Identifier
-        'D' - Garage Door
-     3) Action
-        'O' - Open
-        'C' - Close
-        'S' - Current state of door (opened or closed)
-     4) End Character
-        '^' - Identifies end of incoming command string
-
-     All 4 elements must be present before command is processed,
-     otherwise the buffer is flushed and no action is taken.
+     See xbee_message_reference.txt for
+     details of message format, etc.
   */
 
   if (XBee.available()) {
@@ -91,14 +73,10 @@ void loop() {
       flushBuffer(false);
     }
 
-    else if (commandString.startsWith("*")) {
-      //Serial.println(F("Error echo received from repeater. Flushing buffer."));
-      flushBuffer(false);
-    }
+    else if (commandString.startsWith("*")) flushBuffer(false);
 
     else {
       sendError("Invalid command.");
-      //Serial.println(F("Invalid command."));
       flushBuffer(true);
     }
   }
@@ -108,23 +86,15 @@ void loop() {
     acknowledgeTime = millis();
   }
 
-  if (digitalRead(rangeTestPin) == HIGH) {
-    //Serial.println(F("Test pin triggered."));
-    while (digitalRead(rangeTestPin) == HIGH) {
-      delay(5);
-    }
-    //Serial.println(F("Test pin returned to grounded state."));
-
-    //noInterrupts();
-    rangeTest();
-    //interrupts();
-    //doorCheck();
-  }
-
   if ((millis() - heartbeatLast) > heartbeatInterval) {
     XBee.println(F("^HB@"));
     heartbeatLast = millis();
   }
+
+  if (digitalRead(rangeTestPin) == HIGH) {
+    while (digitalRead(rangeTestPin) == HIGH) delay(5);
+  }
+  rangeTest();
 }
 
 void processCommand(String command) {
@@ -359,10 +329,6 @@ int getInput(String requestMessage) {
     delay(5);
   }
 
-  //if (0 <= serialInput.toInt() < 60) intReturn = serialInput.toInt();
-  //else intReturn = -1;
-  //intReturn = serialInput.toInt();
-
   return serialInput.toInt();
 }
 
@@ -432,6 +398,8 @@ void rangeTest() {
     XBee.print(F("RANGE TEST #")); XBee.println(x + 1);
     delay(1000);
   }
+
+  heartbeatLast = millis();
 
   XBee.println(F("Range test complete."));
 }
