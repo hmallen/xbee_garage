@@ -111,12 +111,14 @@ void processCommand(String command) {
     if (action == 'O') {
       // Check if door already open, and trigger if not
       if (doorOpen == false) triggerDoor();
-      else XBee.println(F("Door already open."));
+      //else XBee.println(F("Door already open."));
+      else XBee.print(F("Door already open."));
     }
     else if (action == 'C') {
       // Check if door already closed, and trigger if not
       if (doorOpen == true) triggerDoor();
-      else XBee.println(F("Door already closed."));
+      //else XBee.println(F("Door already closed."));
+      else XBee.print(F("Door already closed."));
     }
     else if (action == 'L') {
       // Lock door
@@ -169,8 +171,23 @@ void processCommand(String command) {
 }
 
 void sendStatus() {
-  XBee.println(F("^SM"));  // Start-Status-Message
+  String statusMessage = "^SM";
+  
+  statusMessage += "Door State:  ";
+  if (doorOpen == true) statusMessage += "OPEN";
+  else statusMessage += "CLOSED";
+  statusMessage += "\n";
 
+  if (timeNotSet == false) {
+    statusMessage += "Last Opened: ";
+    statusMessage += String(lastOpened);
+  }
+  else statusMessage += "Time not set. No last opened time recorded.";
+  statusMessage += "\n";
+
+  /*
+  XBee.println(F("^SM"));  // Start-Status-Message
+  
   // Send current status of door and option settings
   XBee.print(F("Door State:  "));
   if (doorOpen == true) XBee.println(F("OPEN"));
@@ -194,6 +211,7 @@ void sendStatus() {
   else XBee.println(F("INACTIVE"));
 
   XBee.println(F("@"));  // End of status message
+  */
 }
 
 void triggerDoor() {
