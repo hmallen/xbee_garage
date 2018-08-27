@@ -26,6 +26,13 @@ bool doorAlarm = false;
 bool waitingAcknowledge = false;
 unsigned long acknowledgeTime;
 
+// State Variables (for change reference)
+// - Need to update heartbeatLast and lastOpened "in-place"
+bool doorOpenLast = doorOpen;
+bool lockStateDoorLast = lockStateDoor;
+bool lockStateButtonLast = lockStateButton;
+bool doorAlarmLast = doorAlarm;
+
 SoftwareSerial XBee(xbeeRx, xbeeTx);
 
 void setup() {
@@ -98,6 +105,8 @@ void loop() {
     }
     rangeTest();
   }
+
+  checkUpdates();
 }
 
 void processCommand(String command) {
@@ -203,6 +212,42 @@ void sendStatus() {
   statusMessage += "@";
 
   XBee.print(statusMessage);
+}
+
+void checkUpdates() {
+  /*
+    bool doorOpenLast = doorOpen;
+    bool lockStateDoorLast = lockStateDoor;
+    bool lockStateButtonLast = lockStateButton;
+    bool doorAlarmLast = doorAlarm;
+
+    Command Format:
+    %doorOpen$true
+    1) % - Variable Name Start
+    2) Variable Name
+    3) $ - Variable Value Start
+    4) Variable Value
+  */
+  String updateString = "&U";
+  if (doorOpen != doorOpenLast) {
+    updateString += "%doorOpen$" + String(doorOpen);
+    doorOpenLast = doorOpen;
+  }
+  if (lockStateDoor != lockStateDoorLast) {
+    updateString += "%lockStateDoor$" + String(lockStateDoor);
+    lockStateDoorLast = lockStateDoor;
+  }
+  if (lockStateButton != lockStateButtonLast) {
+    updateString += "%lockStateButton$" + String(lockStateButton);
+    lockStateButtonLast = lockStateButton;
+  }
+  if (doorAlarm != doorAlarmLast) {
+    updateString += "%doorAlarm$" + String(doorAlarm);
+    doorAlarmLast = doorAlarm;
+  }
+  updateString += "&";
+
+  XBee.print(updateString);
 }
 
 void triggerDoor() {
