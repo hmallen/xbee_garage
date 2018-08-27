@@ -107,18 +107,11 @@ void processMessage(String command) {
   }
 
   else if (identifier == 'M') {
-    if (action == 'S') {
-      displayMessage("status", parseMessage(command));
-    }
-    else if (action == 'E') {
-      displayMessage("error", parseMessage(command));
-    }
-    else if (action == 'T') {
-      displayMessage("time", parseMessage(command));
-    }
-    else if (action == 'I') {
-      displayMessage("input", parseMessage(command));
-    }
+    if (action == 'S') displayMessage("status", parseMessage(command));
+    else if (action == 'G') displayMessage("general", parseMessage(command));
+    else if (action == 'E') displayMessage("error", parseMessage(command));
+    else if (action == 'T') displayMessage("time", parseMessage(command));
+    else if (action == 'I') displayMessage("input", parseMessage(command));
     else displayError("Invalid ACTION encountered while processing STATUS command.");
   }
 
@@ -172,6 +165,9 @@ void displayMessage(String messageType, String message) {
   if (messageType == "status") {
     Serial.println(F("Current Status"));
     Serial.println(F("=============="));
+    Serial.println(message);
+  }
+  else if (messageType == "general") {
     Serial.println(message);
   }
   else if (messageType == "error") {

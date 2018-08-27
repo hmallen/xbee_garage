@@ -112,13 +112,13 @@ void processCommand(String command) {
       // Check if door already open, and trigger if not
       if (doorOpen == false) triggerDoor();
       //else XBee.println(F("Door already open."));
-      else XBee.print(F("Door already open."));
+      else XBee.print(F("^MGDoor already open.@"));
     }
     else if (action == 'C') {
       // Check if door already closed, and trigger if not
       if (doorOpen == true) triggerDoor();
       //else XBee.println(F("Door already closed."));
-      else XBee.print(F("Door already closed."));
+      else XBee.print(F("^MGDoor already closed.@"));
     }
     else if (action == 'L') {
       // Lock door
@@ -171,8 +171,8 @@ void processCommand(String command) {
 }
 
 void sendStatus() {
-  String statusMessage = "^SM";
-  
+  String statusMessage = "^MS";
+
   statusMessage += "Door State:  ";
   if (doorOpen == true) statusMessage += "OPEN";
   else statusMessage += "CLOSED";
@@ -185,41 +185,32 @@ void sendStatus() {
   else statusMessage += "Time not set. No last opened time recorded.";
   statusMessage += "\n";
 
-  /*
-  XBee.println(F("^SM"));  // Start-Status-Message
-  
-  // Send current status of door and option settings
-  XBee.print(F("Door State:  "));
-  if (doorOpen == true) XBee.println(F("OPEN"));
-  else XBee.println(F("CLOSED"));
+  statusMessage += "Door Lock:   ";
+  if (lockStateDoor == true) statusMessage += "ENGAGED";
+  else statusMessage += "DISENGAGED";
+  statusMessage += "\n";
 
-  if (timeNotSet == false) {
-    XBee.print(F("Last Opened: ")); XBee.println(lastOpened);
-  }
-  else XBee.println(F("Time not set. No last opened time recorded."));
+  statusMessage += "Button Lock: ";
+  if (lockStateButton == true) statusMessage += "ENGAGED";
+  else statusMessage += "DISENGAGED";
+  statusMessage += "\n";
 
-  XBee.print(F("Door Lock:   "));
-  if (lockStateDoor == true) XBee.println(F("ENGAGED"));
-  else XBee.println(F("DISENGAGED"));
+  statusMessage += "Door Alarm:  ";
+  if (doorAlarm == true) statusMessage += "ACTIVE";
+  else statusMessage += "INACTIVE";
+  statusMessage += "\n";
 
-  XBee.print(F("Button Lock: "));
-  if (lockStateButton == true) XBee.println(F("ENGAGED"));
-  else XBee.println(F("DISENGAGED"));
+  statusMessage += "@";
 
-  XBee.print(F("Door Alarm:  "));
-  if (doorAlarm == true) XBee.println(F("ACTIVE"));
-  else XBee.println(F("INACTIVE"));
-
-  XBee.println(F("@"));  // End of status message
-  */
+  XBee.print(statusMessage);
 }
 
 void triggerDoor() {
-  XBee.print(F("Triggering garage door..."));
+  XBee.print(F("^MGTriggering garage door.@"));
   digitalWrite(doorRelay, HIGH);
   delay(100);
   digitalWrite(doorRelay, LOW);
-  XBee.println(F("complete."));
+  //XBee.print(F("complete.@"));
 }
 
 void toggleLockout(String lock, bool lockAction) {
@@ -228,17 +219,21 @@ void toggleLockout(String lock, bool lockAction) {
       if (lockStateDoor == false) {
         digitalWrite(lockoutRelay, HIGH);
         lockStateDoor = true;
-        XBee.println(F("Door locked."));
+        //XBee.println(F("Door locked."));
+        XBee.print(F("^MGDoor lock engaged.@"));
       }
-      else XBee.println(F("Door already locked."));
+      //else XBee.println(F("Door already locked."));
+      else XBee.print(F("^MGDoor lock already engaged.@"));
     }
     else {
       if (lockStateDoor == true) {
         digitalWrite(lockoutRelay, LOW);
         lockStateDoor = false;
-        XBee.println(F("Door unlocked."));
+        //XBee.println(F("Door unlocked."));
+        XBee.print(F("^MGDoor lock disengaged.@"));
       }
-      else XBee.println(F("Door already unlocked."));
+      //else XBee.println(F("Door already unlocked."));
+      else XBee.print(F("^MGDoor lock already disengaged.@"));
     }
   }
   else if (lock == "button") {
@@ -246,17 +241,21 @@ void toggleLockout(String lock, bool lockAction) {
       if (lockStateButton == false) {
         digitalWrite(lockoutRelayButton, HIGH);
         lockStateButton = true;
-        XBee.println(F("Button locked."));
+        //XBee.println(F("Button locked."));
+        XBee.print(F("^MGButton lock engaged.@"));
       }
-      else XBee.println(F("Button already locked."));
+      //else XBee.println(F("Button already locked."));
+      else XBee.print(F("^MGButton lock already engaged.@"));
     }
     else {
       if (lockStateButton == true) {
         digitalWrite(lockoutRelayButton, LOW);
         lockStateButton = false;
-        XBee.println(F("Button unlocked."));
+        //XBee.println(F("Button unlocked."));
+        XBee.print(F("^MGButton lock disengaged.@"));
       }
-      else XBee.println(F("Button already unlocked."));
+      //else XBee.println(F("Button already unlocked."));
+      else XBee.print(F("^MGButton lock already disengaged.@"));
     }
   }
 }
@@ -265,14 +264,27 @@ void toggleLockout(String lock, bool lockAction) {
 void timeFunction(String timeAction) {
   if (timeAction == "get") {
     if (timeNotSet == false) {
-      XBee.println(F("^MT"));
-      XBee.print(hour()); XBee.print(F(":"));
-      XBee.print(formatDigit(minute())); XBee.print(F(":"));
-      XBee.print(formatDigit(second())); XBee.print(F(" "));
-      XBee.print(month()); XBee.print(F("/"));
-      XBee.print(day()); XBee.print(F("/"));
-      XBee.println(year());
-      XBee.println(F("@"));
+      String timeMessage = "^MT";
+      timeMessage += formatDigit(hour()) + ":";
+      timeMessage += formatDigit(minute()) + ":";
+      timeMessage += formatDigit(second()) + " - ";
+      timeMessage += String(dayStr(weekday())) + " ";
+      timeMessage += String(day()) + " ";
+      timeMessage += String(monthStr(month())) + " ";
+      timeMessage += String(year());
+
+      XBee.print(timeMessage);
+
+      /*
+        XBee.println(F("^MT"));
+        XBee.print(hour()); XBee.print(F(":"));
+        XBee.print(formatDigit(minute())); XBee.print(F(":"));
+        XBee.print(formatDigit(second())); XBee.print(F(" "));
+        XBee.print(month()); XBee.print(F("/"));
+        XBee.print(day()); XBee.print(F("/"));
+        XBee.println(year());
+        XBee.println(F("@"));
+      */
     }
     else sendError("Time has not been set.");
   }
@@ -319,7 +331,9 @@ void timeFunction(String timeAction) {
       hourInput, minuteInput, secondInput,
       dayInput, monthInput, yearInput
     );
-    XBee.println(F("Date/time set successfully."));
+
+    //XBee.println(F("Date/time set successfully."));
+    XBee.print(F("^MGDate/time set successfully.@"));
   }
   else sendError("Unrecognized action encountered in timeFunction().");
 }
@@ -338,11 +352,19 @@ int getInput(String requestMessage) {
   String serialInput = "";
   //int intReturn;
 
-  XBee.println(F("^MI"));
-  XBee.println(requestMessage);
-  XBee.print(F("Response must start and end with the # symbol and contain no spaces."));
-  XBee.println(F(" (ex. #12#)"));
-  XBee.println(F("@"));
+  String inputMessage = "^MI";
+  inputMessage += requestMessage + "\n";
+  inputMessage += "Response must start and end with the '#' symbol and contain no spaces. (ex. #12#)@";
+
+  XBee.print(inputMessage);
+
+  /*
+    XBee.println(F("^MI"));
+    XBee.println(requestMessage);
+    XBee.print(F("Response must start and end with the # symbol and contain no spaces."));
+    XBee.println(F(" (ex. #12#)"));
+    XBee.println(F("@"));
+  */
 
   unsigned long waitStart = millis();
   while (!XBee.available()) {
@@ -374,16 +396,22 @@ int getInput(String requestMessage) {
 }
 
 void sendAlarm(String alarmType) {
-  if (alarmType == "door") {
-    XBee.println(F("^AD@"));
-  }
+  if (alarmType == "door") XBee.print(F("^AD@"));
 }
 
 void sendError(String errorMessage) {
-  XBee.println(F("^EM"));
-  //XBee.print(F("*ERROR* "));
-  XBee.println(errorMessage);
-  XBee.println(F("@"));
+  String errorString = "^ME";
+  errorString += errorMessage;
+  errorString += "@";
+
+  XBee.print(errorString);
+
+  /*
+    XBee.println(F("^ME"));
+    //XBee.print(F("*ERROR* "));
+    XBee.println(errorMessage);
+    XBee.println(F("@"));
+  */
 }
 
 // XBee Buffer Flush Function
@@ -429,7 +457,8 @@ void doorCheck() {
 
 // Auxillary Functions
 void rangeTest() {
-  XBee.println(F("Beginning 120 second range test."));
+  //XBee.println(F("Beginning 120 second range test."));
+  XBee.print(F("^MGBeginning 120 second range test.@"));
 
   unsigned long testStart = millis();
   for (byte x = 0; (millis() - testStart) < 120000; x++) {
@@ -439,12 +468,15 @@ void rangeTest() {
       delay(100);
       digitalWrite(ledPin, LOW);
     }
-    XBee.print(F("RANGE TEST #")); XBee.println(x + 1);
+    //XBee.print(F("RANGE TEST #")); XBee.println(x + 1);
+    String testMessage = "^MGRANGE TEST #" + String(x + 1) + "@";
+    XBee.print(testMessage);
     delay(1000);
   }
 
   heartbeatLast = millis();
 
-  XBee.println(F("Range test complete."));
+  //XBee.println(F("Range test complete."));
+  XBee.print(F("^MGRange test complete.@"));
 }
 
