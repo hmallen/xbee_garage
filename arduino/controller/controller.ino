@@ -168,13 +168,15 @@ void processCommand(String command) {
 }
 
 void sendStatus() {
+  XBee.println(F("^SM"));  // Start-Status-Message
+
   // Send current status of door and option settings
   XBee.print(F("Door State:  "));
   if (doorOpen == true) XBee.println(F("OPEN"));
   else XBee.println(F("CLOSED"));
 
   if (timeNotSet == false) {
-    XBee.print(F("Last opened: ")); XBee.println(lastOpened);
+    XBee.print(F("Last Opened: ")); XBee.println(lastOpened);
   }
   else XBee.println(F("Time not set. No last opened time recorded."));
 
@@ -189,6 +191,8 @@ void sendStatus() {
   XBee.print(F("Door Alarm:  "));
   if (doorAlarm == true) XBee.println(F("ACTIVE"));
   else XBee.println(F("INACTIVE"));
+
+  XBee.println(F("@"));  // End of status message
 }
 
 void triggerDoor() {
@@ -242,12 +246,14 @@ void toggleLockout(String lock, bool lockAction) {
 void timeFunction(String timeAction) {
   if (timeAction == "get") {
     if (timeNotSet == false) {
+      XBee.println(F("^MT"));
       XBee.print(hour()); XBee.print(F(":"));
       XBee.print(formatDigit(minute())); XBee.print(F(":"));
       XBee.print(formatDigit(second())); XBee.print(F(" "));
       XBee.print(month()); XBee.print(F("/"));
       XBee.print(day()); XBee.print(F("/"));
       XBee.println(year());
+      XBee.println(F("@"));
     }
     else sendError("Time has not been set.");
   }
@@ -313,7 +319,12 @@ int getInput(String requestMessage) {
   String serialInput = "";
   //int intReturn;
 
+  XBee.println(F("^MI"));
   XBee.println(requestMessage);
+  XBee.print(F("Response must start and end with the # symbol and contain no spaces."));
+  XBee.println(F(" (ex. #12#)"));
+  XBee.println(F("@"));
+
   unsigned long waitStart = millis();
   while (!XBee.available()) {
     if ((millis() - waitStart) > 30000) {
@@ -331,6 +342,15 @@ int getInput(String requestMessage) {
     delay(5);
   }
 
+  if (serialInput.startsWith("#") == true && serialInput.endsWith("#") == true) {
+    serialInput.remove(0, 1);
+    serialInput.remove(serialInput.indexOf('#'));
+  }
+  else {
+    sendError("Invalid input received while setting time.");
+    return -1;
+  }
+
   return serialInput.toInt();
 }
 
@@ -341,7 +361,10 @@ void sendAlarm(String alarmType) {
 }
 
 void sendError(String errorMessage) {
-  XBee.print(F("*ERROR* ")); XBee.println(errorMessage);
+  XBee.println(F("^EM"));
+  //XBee.print(F("*ERROR* "));
+  XBee.println(errorMessage);
+  XBee.println(F("@"));
 }
 
 // XBee Buffer Flush Function

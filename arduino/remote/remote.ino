@@ -57,7 +57,7 @@ void loop() {
 
     else if (messageString.startsWith("@") && messageString.endsWith("^")) {
       //Serial.println(F("Command echo received from repeater. Flushing buffer."));
-      flushBuffer(false);
+      //flushBuffer(false);
     }
 
     else if (messageString.startsWith("*")) flushBuffer(false);
@@ -105,6 +105,23 @@ void processMessage(String command) {
     }
     else displayError("Invalid ACTION encountered while processing ALARM command.");
   }
+
+  else if (identifier == 'M') {
+    if (action == 'S') {
+      displayMessage("status", parseMessage(command));
+    }
+    else if (action == 'E') {
+      displayMessage("error", parseMessage(command));
+    }
+    else if (action == 'T') {
+      displayMessage("time", parseMessage(command));
+    }
+    else if (action == 'I') {
+      displayMessage("input", parseMessage(command));
+    }
+    else displayError("Invalid ACTION encountered while processing STATUS command.");
+  }
+
   else if (identifier == 'H') {
     if (action == 'B') {
       ledHeartbeat();
@@ -112,6 +129,7 @@ void processMessage(String command) {
     }
     else displayError("Invalid ACTION encountered while processing HEARTBEAT command.");
   }
+
   else displayError("Invalid IDENTIFIER encountered while processing command.");
 }
 
@@ -150,8 +168,36 @@ void ledAlarm(String alarmType, byte cycles) {
   else displayError("Unrecognized alarm type passed to ledAlarm().");
 }
 
+void displayMessage(String messageType, String message) {
+  if (messageType == "status") {
+    Serial.println(F("Current Status"));
+    Serial.println(F("=============="));
+    Serial.println(message);
+  }
+  else if (messageType == "error") {
+    Serial.print(F("ERROR (Controller): ")); Serial.println(message);
+  }
+  else if (messageType == "time") {
+    Serial.print(F("Current Date/Time: ")); Serial.println(message);
+  }
+  else if (messageType == "input") {
+    Serial.println(message);
+  }
+  else {
+    displayError("Unrecognized message type passed to displayMessage().");
+  }
+}
+
 void displayError(String errorMessage) {
-  Serial.print(F("*ERROR* ")); Serial.println(errorMessage);
+  Serial.print(F("ERROR (Remote): ")); Serial.println(errorMessage);
+}
+
+String parseMessage(String messageRaw) {
+  String messageParsed = messageRaw;
+  messageParsed.remove(0, 3);
+  messageParsed.remove(messageParsed.indexOf('@'));
+  Serial.print(F("messageParsed: ")); Serial.println(messageParsed);
+  return messageParsed;
 }
 
 // XBee Buffer Flush Function
