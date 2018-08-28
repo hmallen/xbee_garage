@@ -42,7 +42,7 @@ if __name__ == '__main__':
     ser = serial.Serial(
         port='/dev/ttyUSB0',
         baudrate=9600,
-        #timeout=0.5
+        # stimeout=0.5
     )
 
     config = configparser.ConfigParser()
@@ -58,12 +58,15 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            time.sleep(1)
+            bytes_total = ser.in_waiting
+            serial_start = time.time()
+            while ((time.time() - serial_start) < 0.1):
+                byte_count = ser.in_waiting
+                if byte_count > bytes_total:
+                    bytes_total = byte_count
+                    serial_start = time.time()
 
             logger.debug('ser.in_waiting: ' + str(ser.in_waiting))
-
-            if ser.in_waiting < 4:
-                sys.exit()
 
             # while ser.in_waiting > 0:
             msg = ser.read(size=ser.in_waiting)
