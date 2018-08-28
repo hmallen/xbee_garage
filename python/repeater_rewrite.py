@@ -37,7 +37,7 @@ def mqtt_update(variable, value):
         channel = 4
         data_unit = 'd'
 
-    logger.debug('Updating variable via MQTT.')
+    logger.debug('Updating "' + variable '" via MQTT.')
     mqtt_client.virtualWrite(channel, value, data_type, data_unit)
 
 
@@ -73,8 +73,7 @@ def process_message(msg):
         elif start_char == '&':
             updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:-1].split('%')]
             logger.debug('updates: ' + str(updates))
-
-            logger.info('Updating values via MQTT.')
+            
             [mqtt_update(update[0], update[1]) for update in updates]
 
     except Exception as e:
