@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
             # Rebroadcast message for remote units, if necessary (repeater function)
             if rebroadcast_msg == True:
-                logger.debug('Rebroadcasting message.')
+                logger.debug('Rebroadcasting: ' + str(msg))
 
                 bytes_written = ser.write(msg)
                 logger.debug('bytes_written: ' + str(bytes_written))

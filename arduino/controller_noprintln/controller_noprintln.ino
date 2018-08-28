@@ -77,14 +77,14 @@ void loop() {
 
     else if (commandString.startsWith("^") && commandString.endsWith("@")) {
       //Serial.println(F("Command echo received from repeater. Flushing buffer."));
-      flushBuffer(false);
+      //flushBuffer(false);
     }
 
-    else if (commandString.startsWith("*")) flushBuffer(false);
+    //else if (commandString.startsWith("*")) flushBuffer(false);
 
     else {
       sendError("Invalid command.");
-      flushBuffer(true);
+      //flushBuffer(true);
     }
   }
 

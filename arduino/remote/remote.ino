@@ -36,6 +36,7 @@ void loop() {
   if (Serial.available()) {
     while (Serial.available()) {
       XBee.write(Serial.read());
+      delay(5);
     }
   }
 
@@ -51,20 +52,20 @@ void loop() {
     Serial.print(F("Command Received: ")); Serial.println(messageString);
 
     if (messageString.startsWith("^") && messageString.endsWith("@")) {
-      //Serial.println(F("Processing command."));
+      Serial.println(F("Processing command."));
       processMessage(messageString);
     }
 
     else if (messageString.startsWith("@") && messageString.endsWith("^")) {
-      //Serial.println(F("Command echo received from repeater. Flushing buffer."));
+      Serial.println(F("Command echo received from repeater."));
       //flushBuffer(false);
     }
 
-    else if (messageString.startsWith("*")) flushBuffer(false);
+    //else if (messageString.startsWith("*")) flushBuffer(false);
 
     else {
       displayError("Invalid command.");
-      flushBuffer(true);
+      //flushBuffer(true);
     }
   }
 
