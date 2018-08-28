@@ -2,6 +2,7 @@ import configparser
 import io
 import logging
 import serial
+import sys
 import time
 
 import cayenne.client
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     ser = serial.Serial(
         port='/dev/ttyUSB0',
         baudrate=9600,
-        timeout=0.5
+        #timeout=0.5
     )
 
     config = configparser.ConfigParser()
@@ -59,7 +60,10 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             time.sleep(0.1)
 
-            logger.debug('byte_count: ' + str(ser.in_waiting))
+            logger.debug('ser.in_waiting: ' + str(ser.in_waiting))
+
+            if ser.in_waiting < 4:
+                sys.exit()
 
             # while ser.in_waiting > 0:
             msg = ser.read(size=ser.in_waiting)
