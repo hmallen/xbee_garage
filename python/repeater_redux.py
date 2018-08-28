@@ -58,18 +58,21 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            msg = ser.read().decode()
+            msg = ser.read()
             logger.debug('msg: ' + str(msg))
 
-            start_char = msg[0]
+            msg_decoded = msg.decode()
+            logger.debug('msg_decoded: ' + msg_decoded)
+
+            start_char = msg_decoded[0]
             logger.debug('start_char: ' + start_char)
-            end_char = msg[-1]
+            end_char = msg_decoded[-1]
             logger.debug('end_char: ' + end_char)
 
             rebroadcast_msg = False
 
             if start_char == '&':
-                // Update Cayenne dashboard via MQTT client
+                # Update Cayenne dashboard via MQTT client
                 updates = [(var.split('$')[0], var.split('$')[1]) for var in test_var[3:].split('%')]
                 logger.debug('updates: ' + str(updates))
 
@@ -92,8 +95,9 @@ if __name__ == '__main__':
             else:
                 logger.error('Unrecognized start character in received message.')
 
-            # Rebroadcast message for remote units (repeater function)
-            #
+            # Rebroadcast message for remote units, if necessary (repeater function)
+            if rebroadcast_msg == True:
+                pass
 
         print(msg)
 
