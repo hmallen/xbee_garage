@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            time.sleep(0.5)
+            time.sleep(1)
 
             logger.debug('ser.in_waiting: ' + str(ser.in_waiting))
 
