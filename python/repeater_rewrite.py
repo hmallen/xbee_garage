@@ -105,7 +105,7 @@ if __name__ == '__main__':
     while (True):
         if ser.in_waiting > 0:
             c = ser.read()
-            if c == '@' or c == '^' or c == '&':
+            if c == b'@' or c == b'^' or c == b'&':
                 if new_msg is False:
                     new_msg = True
                     msg = c
