@@ -89,7 +89,7 @@ void loop() {
   }
 
   if (waitingAcknowledge == true && (millis() - acknowledgeTime) > 5000) {
-    sendError("Timeout while waiting for door alarm acknowledgement. Remote unit may be out of range.");
+    sendError("Acknowledgement timeout. Remote may be out of range.");
     acknowledgeTime = millis();
   }
 
@@ -211,7 +211,9 @@ void sendStatus() {
 
   statusMessage += "@";
 
+  //Serial.print(statusMessage);
   XBee.print(statusMessage);
+  XBee.flush();
 }
 
 void checkUpdates() {
@@ -343,37 +345,37 @@ void timeFunction(String timeAction) {
     // Month
     int monthInput = getInput("Input current month (1-12):");
     if (monthInput < 1 || monthInput > 12) {
-      sendError("Invalid month input. Returning to main program.");
+      sendError("Invalid month input.");
       return;
     }
     // Day
     int dayInput = getInput("Input current day (1-31):");
     if (dayInput < 1 || dayInput > 31) {
-      sendError("Invalid day input. Returning to main program.");
+      sendError("Invalid day input.");
       return;
     }
     // Year
     int yearInput = getInput("Input current year (ex. 2018):");
     if (yearInput < 2018) {
-      sendError("Invalid year input. Returning to main program.");
+      sendError("Invalid year input.");
       return;
     }
     // Hour
     int hourInput = getInput("Input current hour (0-23):");
     if (hourInput < 0 || hourInput > 23) {
-      sendError("Invalid hour input. Returning to main program.");
+      sendError("Invalid hour input.");
       return;
     }
     // Minute
     int minuteInput = getInput("Input current minute (0-59):");
     if (minuteInput < 0 || minuteInput > 59) {
-      sendError("Invalid minute input. Returning to main program.");
+      sendError("Invalid minute input.");
       return;
     }
     // Second
     int secondInput = getInput("Input current second (0-59):");
     if (secondInput < 0 || secondInput > 59) {
-      sendError("Invalid second input. Returning to main program.");
+      sendError("Invalid second input.");
       return;
     }
 

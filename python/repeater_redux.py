@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            time.sleep(0.1)
+            time.sleep(0.5)
 
             logger.debug('ser.in_waiting: ' + str(ser.in_waiting))
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
             if rebroadcast_msg == True:
                 logger.debug('Rebroadcasting: ' + str(msg))
 
-                bytes_written = ser.write(msg.decode().encode('utf-8'))
+                bytes_written = ser.write(msg)
                 logger.debug('bytes_written: ' + str(bytes_written))
 
         time.sleep(0.01)
