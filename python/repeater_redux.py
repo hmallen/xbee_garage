@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            msg = ''
+            msg = b''
             while ser.in_waiting > 0:
                 c = ser.read()
                 msg += c
