@@ -37,7 +37,7 @@ def mqtt_update(variable, value):
         channel = 4
         data_unit = 'd'
 
-    logger.debug('Updating "' + variable '" via MQTT.')
+    logger.debug('Updating "' + variable + '" via MQTT.')
     mqtt_client.virtualWrite(channel, value, data_type, data_unit)
 
 
