@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
             if start_char == '&':
                 # Update Cayenne dashboard via MQTT client
-                updates = [(var.split('$')[0], var.split('$')[1]) for var in test_var[3:].split('%')]
+                updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:].split('%')]
                 logger.debug('updates: ' + str(updates))
 
                 [update_value(update[0], update[1]) for update in updates]
