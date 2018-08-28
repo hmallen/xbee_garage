@@ -111,6 +111,7 @@ if __name__ == '__main__':
             if rebroadcast_msg == True:
                 logger.debug('Rebroadcasting message.')
 
-                ser.write(msg)
+                bytes_written = ser.write(msg)
+                logger.debug('bytes_written: ' + str(bytes_written))
 
         time.sleep(0.01)
