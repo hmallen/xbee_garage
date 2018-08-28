@@ -73,7 +73,7 @@ def process_message(msg):
         elif start_char == '&':
             updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:-1].split('%')]
             logger.debug('updates: ' + str(updates))
-            
+
             [mqtt_update(update[0], update[1]) for update in updates]
 
     except Exception as e:
@@ -117,6 +117,7 @@ if __name__ == '__main__':
                         if process_result['rebroadcast'] is True:
                             bytes_written = ser.write(process_result['message'])
                             logger.debug('bytes_written: ' + str(bytes_written))
+                            time.sleep(0.05)
                     else:
                         logger.error('Error while processing message.')
             elif new_msg is True:

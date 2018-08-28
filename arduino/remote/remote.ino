@@ -48,7 +48,7 @@ void loop() {
     while (XBee.available()) {
       char c = XBee.read();
       if (count == 0 && c == '@') {
-        flushBuffer(true);
+        //flushBuffer(true);
         bypassProcessing = true;
       }
       if (c != '\n' && c != '\r') messageString += c;
@@ -57,22 +57,15 @@ void loop() {
     }
 
     if (bypassProcessing == false) {
-      Serial.print(F("Command Received: ")); Serial.println(messageString);
+      //Serial.print(F("Command Received: ")); Serial.println(messageString);
 
       if (messageString.startsWith("^") && messageString.endsWith("@")) {
-        Serial.println(F("Processing command."));
+        //Serial.println(F("Processing command."));
         processMessage(messageString);
       }
 
-      //else if (messageString.startsWith("@") && messageString.endsWith("^")) {
-      //Serial.println(F("Command echo received from repeater."));
-      //flushBuffer(false);
-      //}
-
-      //else if (messageString.startsWith("*")) flushBuffer(false);
-
       else {
-        displayError("Invalid command.");
+        displayError("Invalid command: " + messageString);
         //flushBuffer(true);
       }
     }
@@ -99,9 +92,9 @@ void loop() {
 void processMessage(String command) {
   // Format: ^{IDENTIFIER}{ACTION}@
   char identifier = command.charAt(1);
-  Serial.print(F("Identifier: ")); Serial.println(identifier);
+  //Serial.print(F("Identifier: ")); Serial.println(identifier);
   char action = command.charAt(2);
-  Serial.print(F("Action: ")); Serial.println(action);
+  //Serial.print(F("Action: ")); Serial.println(action);
 
   if (identifier == 'A') {
     if (action == 'D') {
@@ -202,7 +195,7 @@ String parseMessage(String messageRaw) {
   String messageParsed = messageRaw;
   messageParsed.remove(0, 3);
   messageParsed.remove(messageParsed.indexOf('@'));
-  Serial.print(F("messageParsed: ")); Serial.println(messageParsed);
+  //Serial.print(F("messageParsed: ")); Serial.println(messageParsed);
   return messageParsed;
 }
 
