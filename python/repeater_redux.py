@@ -59,7 +59,7 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             msg = b''
             # while ser.in_waiting > 0:
-            msg = ser.read(size=10000)
+            msg = ser.read(size=ser.in_waiting)
             # msg += c
             # logger.debug('msg: ' + str(msg))
             # time.sleep(0.01)
