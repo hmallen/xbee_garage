@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # timeout=1
     )
 
-    configparser = configparser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(config_path)
 
     mqtt_username = config['mqtt']['username']
