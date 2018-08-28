@@ -11,7 +11,7 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-config_path = 'config/config.ini'
+config_path = '../config/config.ini'
 
 
 # Function for updating dashboard values via MQTT
