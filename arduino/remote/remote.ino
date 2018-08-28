@@ -42,30 +42,39 @@ void loop() {
 
   // Handle messages from control unit
   if (XBee.available()) {
+    bool bypassProcessing = false;
     String messageString = "";
+    byte count = 0;
     while (XBee.available()) {
       char c = XBee.read();
+      if (count == 0 && c == '@') {
+        flushBuffer(true);
+        bypassProcessing = true;
+      }
       if (c != '\n' && c != '\r') messageString += c;
+      count++;
       delay(5);
     }
 
-    Serial.print(F("Command Received: ")); Serial.println(messageString);
+    if (bypassProcessing == false) {
+      Serial.print(F("Command Received: ")); Serial.println(messageString);
 
-    if (messageString.startsWith("^") && messageString.endsWith("@")) {
-      Serial.println(F("Processing command."));
-      processMessage(messageString);
-    }
+      if (messageString.startsWith("^") && messageString.endsWith("@")) {
+        Serial.println(F("Processing command."));
+        processMessage(messageString);
+      }
 
-    else if (messageString.startsWith("@") && messageString.endsWith("^")) {
-      Serial.println(F("Command echo received from repeater."));
+      //else if (messageString.startsWith("@") && messageString.endsWith("^")) {
+      //Serial.println(F("Command echo received from repeater."));
       //flushBuffer(false);
-    }
+      //}
 
-    //else if (messageString.startsWith("*")) flushBuffer(false);
+      //else if (messageString.startsWith("*")) flushBuffer(false);
 
-    else {
-      displayError("Invalid command.");
-      //flushBuffer(true);
+      else {
+        displayError("Invalid command.");
+        //flushBuffer(true);
+      }
     }
   }
 
@@ -164,8 +173,8 @@ void ledAlarm(String alarmType, byte cycles) {
 
 void displayMessage(String messageType, String message) {
   if (messageType == "status") {
-    Serial.println(F("Current Status"));
-    Serial.println(F("=============="));
+    //Serial.println(F("Current Status"));
+    //Serial.println(F("=============="));
     Serial.println(message);
   }
   else if (messageType == "general") {
@@ -204,7 +213,7 @@ void flushBuffer(bool timeout) {
   int flushTimeout;
   if (timeout == true) {
     Serial.print(F("delaying for safety..."));
-    flushTimeout = 1000;
+    flushTimeout = 500;
   }
   else {
     flushTimeout = 0;

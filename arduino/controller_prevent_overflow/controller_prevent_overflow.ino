@@ -63,7 +63,7 @@ void loop() {
   if (XBee.available()) {
     bool bypassProcessing = false;
     String commandString = "";
-    int count = 0;
+    byte count = 0;
     while (XBee.available()) {
       char c = XBee.read();
       if (count == 0 && c == '^') {
@@ -71,7 +71,7 @@ void loop() {
         bypassProcessing = true;
       }
       if (c != '\n' && c != '\r') commandString += c;
-      count ++;
+      count++;
       delay(5);
     }
 
@@ -83,10 +83,10 @@ void loop() {
         processCommand(commandString);
       }
 
-      else if (commandString.startsWith("^") && commandString.endsWith("@")) {
-        //Serial.println(F("Command echo received from repeater. Flushing buffer."));
-        //flushBuffer(false);
-      }
+      //else if (commandString.startsWith("^") && commandString.endsWith("@")) {
+      //Serial.println(F("Command echo received from repeater. Flushing buffer."));
+      //flushBuffer(false);
+      //}
 
       //else if (commandString.startsWith("*")) flushBuffer(false);
 
@@ -106,6 +106,9 @@ void loop() {
     //XBee.println(F("^HB@"));
     XBee.print(F("^HB@"));
     heartbeatLast = millis();
+    XBee.print(F("&U%heartbeatLast$"));
+    XBee.print(heartbeatLast);
+    XBee.print(F("&"));
   }
 
   if (digitalRead(rangeTestPin) == HIGH) {
@@ -115,7 +118,7 @@ void loop() {
     rangeTest();
   }
 
-  checkUpdates();
+  checkUpdates(false);
 }
 
 void processCommand(String command) {
@@ -147,7 +150,7 @@ void processCommand(String command) {
       toggleLockout("door", false);
     }
     else if (action == 'S') sendStatus();
-    else sendError("Invalid ACTION encountered while processing DOOR command.");
+    else sendError("Invalid ACTION while processing DOOR command.");
   }
 
   else if (identifier == 'B') {
@@ -159,13 +162,13 @@ void processCommand(String command) {
       // Unlock button
       toggleLockout("button", false);
     }
-    else sendError("Invalid ACTION encountered while processing BUTTON command.");
+    else sendError("Invalid ACTION while processing BUTTON command.");
   }
 
   else if (identifier == 'T') {
     if (action == 'G') timeFunction("get");
     else if (action == 'S') timeFunction("set");
-    else sendError("Invalid ACTION encountered while processing TIME command.");
+    else sendError("Invalid ACTION while processing TIME command.");
   }
 
   else if (identifier == 'A') {
@@ -181,51 +184,89 @@ void processCommand(String command) {
     }
     else if (action == 'K') {
       if (waitingAcknowledge == true) waitingAcknowledge = false;
-      else sendError("Acknowledgement received unexpectedly. An error may have occurred.");
+      else sendError("Unexpected acknowledgement received. An error may have occurred.");
     }
-    else sendError("Invalid ACTION encountered while processing ALARM command.");
+    else sendError("Invalid ACTION while processing ALARM command.");
   }
-  else sendError("Invalid IDENTIFIER encountered while processing command.");
+
+  else if (identifier == 'U') {
+    if (action == 'F') {
+      checkUpdates(true);
+    }
+    else sendError("Invalid ACTION while processing UPDATE command.");
+  }
+
+  else sendError("Invalid IDENTIFIER while processing command.");
 }
 
 void sendStatus() {
-  String statusMessage = "^MS";
-
-  statusMessage += "Door State:  ";
+  String statusMessage = "^MSDoor:        ";
   if (doorOpen == true) statusMessage += "OPEN";
   else statusMessage += "CLOSED";
-  statusMessage += "\n";
+  statusMessage += "@";
+  XBee.print(statusMessage);
 
-  if (timeNotSet == false) {
-    statusMessage += "Last Opened: ";
-    statusMessage += String(lastOpened);
-  }
-  else statusMessage += "Time not set. No last opened time recorded.";
-  statusMessage += "\n";
+  statusMessage = "^MSLast Opened: ";
+  if (timeNotSet == false) statusMessage += String(lastOpened);
+  else statusMessage += "Time not set.";
+  statusMessage += "@";
+  XBee.print(statusMessage);
 
-  statusMessage += "Door Lock:   ";
+  statusMessage = "^MSDoor Lock:   ";
   if (lockStateDoor == true) statusMessage += "ENGAGED";
   else statusMessage += "DISENGAGED";
-  statusMessage += "\n";
+  statusMessage += "@";
+  XBee.print(statusMessage);
 
-  statusMessage += "Button Lock: ";
+  statusMessage = "^MSButton Lock: ";
   if (lockStateButton == true) statusMessage += "ENGAGED";
   else statusMessage += "DISENGAGED";
-  statusMessage += "\n";
+  statusMessage += "@";
+  XBee.print(statusMessage);
 
-  statusMessage += "Door Alarm:  ";
+  statusMessage = "^MSDoor Alarm:  ";
   if (doorAlarm == true) statusMessage += "ACTIVE";
   else statusMessage += "INACTIVE";
-  statusMessage += "\n";
-
   statusMessage += "@";
-
-  //Serial.print(statusMessage);
   XBee.print(statusMessage);
-  XBee.flush();
+
+  /*
+    statusMessage += "Door State:  ";
+    if (doorOpen == true) statusMessage += "OPEN";
+    else statusMessage += "CLOSED";
+    statusMessage += "\n";
+
+    if (timeNotSet == false) {
+    statusMessage += "Last Opened: ";
+    statusMessage += String(lastOpened);
+    }
+    else statusMessage += "Time not set. No last opened time recorded.";
+    statusMessage += "\n";
+
+    statusMessage += "Door Lock:   ";
+    if (lockStateDoor == true) statusMessage += "ENGAGED";
+    else statusMessage += "DISENGAGED";
+    statusMessage += "\n";
+
+    statusMessage += "Button Lock: ";
+    if (lockStateButton == true) statusMessage += "ENGAGED";
+    else statusMessage += "DISENGAGED";
+    statusMessage += "\n";
+
+    statusMessage += "Door Alarm:  ";
+    if (doorAlarm == true) statusMessage += "ACTIVE";
+    else statusMessage += "INACTIVE";
+    statusMessage += "\n";
+
+    statusMessage += "@";
+
+    //Serial.print(statusMessage);
+    XBee.print(statusMessage);
+    XBee.flush();
+  */
 }
 
-void checkUpdates() {
+void checkUpdates(bool sendFull) {
   /*
     bool doorOpenLast = doorOpen;
     bool lockStateDoorLast = lockStateDoor;
@@ -239,32 +280,26 @@ void checkUpdates() {
     3) $ - Variable Value Start
     4) Variable Value
   */
-  bool updateRequired = false;
-
   String updateString = "&U";
-  if (doorOpen != doorOpenLast) {
+  if (doorOpen != doorOpenLast || sendFull == true) {
     updateString += "%doorOpen$" + String(doorOpen);
     doorOpenLast = doorOpen;
-    updateRequired = true;
   }
-  if (lockStateDoor != lockStateDoorLast) {
+  if (lockStateDoor != lockStateDoorLast || sendFull == true) {
     updateString += "%lockStateDoor$" + String(lockStateDoor);
     lockStateDoorLast = lockStateDoor;
-    updateRequired = true;
   }
-  if (lockStateButton != lockStateButtonLast) {
+  if (lockStateButton != lockStateButtonLast || sendFull == true) {
     updateString += "%lockStateButton$" + String(lockStateButton);
     lockStateButtonLast = lockStateButton;
-    updateRequired = true;
   }
-  if (doorAlarm != doorAlarmLast) {
+  if (doorAlarm != doorAlarmLast || sendFull == true) {
     updateString += "%doorAlarm$" + String(doorAlarm);
     doorAlarmLast = doorAlarm;
-    updateRequired = true;
   }
   updateString += "&";
 
-  if (updateRequired == true) XBee.print(updateString);
+  if (updateString.length() > 3) XBee.print(updateString);
 }
 
 void triggerDoor() {
@@ -397,7 +432,7 @@ void timeFunction(String timeAction) {
     //XBee.println(F("Date/time set successfully."));
     XBee.print(F("^MGDate/time set successfully.@"));
   }
-  else sendError("Unrecognized action encountered in timeFunction().");
+  else sendError("Unrecognized action in timeFunction().");
 }
 
 String formatDigit(int digit) {
