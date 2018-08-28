@@ -15,7 +15,7 @@ volatile bool doorOpen;
 
 // Standard variables
 unsigned long heartbeatLast = 0;
-int heartbeatInterval = 10000;
+int heartbeatInterval = 30000;
 
 bool lockStateDoor = false;
 bool lockStateButton = false;
@@ -167,7 +167,7 @@ void processCommand(String command) {
 
   else if (identifier == 'T') {
     if (action == 'G') timeFunction("get");
-    else if (action == 'S') timeFunction("set");
+    else if (action == 'S') timeFunction("sync");
     else sendError("Invalid ACTION while processing TIME command.");
   }
 
@@ -229,41 +229,6 @@ void sendStatus() {
   else statusMessage += "INACTIVE";
   statusMessage += "@";
   XBee.print(statusMessage);
-
-  /*
-    statusMessage += "Door State:  ";
-    if (doorOpen == true) statusMessage += "OPEN";
-    else statusMessage += "CLOSED";
-    statusMessage += "\n";
-
-    if (timeNotSet == false) {
-    statusMessage += "Last Opened: ";
-    statusMessage += String(lastOpened);
-    }
-    else statusMessage += "Time not set. No last opened time recorded.";
-    statusMessage += "\n";
-
-    statusMessage += "Door Lock:   ";
-    if (lockStateDoor == true) statusMessage += "ENGAGED";
-    else statusMessage += "DISENGAGED";
-    statusMessage += "\n";
-
-    statusMessage += "Button Lock: ";
-    if (lockStateButton == true) statusMessage += "ENGAGED";
-    else statusMessage += "DISENGAGED";
-    statusMessage += "\n";
-
-    statusMessage += "Door Alarm:  ";
-    if (doorAlarm == true) statusMessage += "ACTIVE";
-    else statusMessage += "INACTIVE";
-    statusMessage += "\n";
-
-    statusMessage += "@";
-
-    //Serial.print(statusMessage);
-    XBee.print(statusMessage);
-    XBee.flush();
-  */
 }
 
 void checkUpdates(bool sendFull) {
@@ -371,63 +336,11 @@ void timeFunction(String timeAction) {
       timeMessage += String(year());
 
       XBee.print(timeMessage);
-
-      /*
-        XBee.println(F("^MT"));
-        XBee.print(hour()); XBee.print(F(":"));
-        XBee.print(formatDigit(minute())); XBee.print(F(":"));
-        XBee.print(formatDigit(second())); XBee.print(F(" "));
-        XBee.print(month()); XBee.print(F("/"));
-        XBee.print(day()); XBee.print(F("/"));
-        XBee.println(year());
-        XBee.println(F("@"));
-      */
     }
     else sendError("Time has not been set.");
   }
-  else if (timeAction == "set") {
-    // Month
-    int monthInput = getInput("Input current month (1-12):");
-    if (monthInput < 1 || monthInput > 12) {
-      sendError("Invalid month input.");
-      return;
-    }
-    // Day
-    int dayInput = getInput("Input current day (1-31):");
-    if (dayInput < 1 || dayInput > 31) {
-      sendError("Invalid day input.");
-      return;
-    }
-    // Year
-    int yearInput = getInput("Input current year (ex. 2018):");
-    if (yearInput < 2018) {
-      sendError("Invalid year input.");
-      return;
-    }
-    // Hour
-    int hourInput = getInput("Input current hour (0-23):");
-    if (hourInput < 0 || hourInput > 23) {
-      sendError("Invalid hour input.");
-      return;
-    }
-    // Minute
-    int minuteInput = getInput("Input current minute (0-59):");
-    if (minuteInput < 0 || minuteInput > 59) {
-      sendError("Invalid minute input.");
-      return;
-    }
-    // Second
-    int secondInput = getInput("Input current second (0-59):");
-    if (secondInput < 0 || secondInput > 59) {
-      sendError("Invalid second input.");
-      return;
-    }
-
-    // Set date/time
-    setTime(
-      hourInput, minuteInput, secondInput,
-      dayInput, monthInput, yearInput
-    );
+  else if (timeAction == "sync") {
+    syncTime();
 
     //XBee.println(F("Date/time set successfully."));
     XBee.print(F("^MGDate/time set successfully.@"));
@@ -444,52 +357,44 @@ String formatDigit(int digit) {
   return digitString;
 }
 
-// Get serial input from user, returning converted value
-int getInput(String requestMessage) {
-  String serialInput = "";
-  //int intReturn;
+// Sync date/time from RPi repeater by request
+void syncTime() {
+  XBee.print("#TS#");
 
-  String inputMessage = "^MI";
-  inputMessage += requestMessage + "\n";
-  inputMessage += "Response must start and end with the '#' symbol and contain no spaces. (ex. #12#)@";
-
-  XBee.print(inputMessage);
-
-  /*
-    XBee.println(F("^MI"));
-    XBee.println(requestMessage);
-    XBee.print(F("Response must start and end with the # symbol and contain no spaces."));
-    XBee.println(F(" (ex. #12#)"));
-    XBee.println(F("@"));
-  */
-
-  unsigned long waitStart = millis();
+  bool requestTimeout = false;
+  unsigned long requestTime = millis();
   while (!XBee.available()) {
-    if ((millis() - waitStart) > 30000) {
-      sendError("Timeout while waiting for serial input.");
-      return -1;
+    if ((millis() - requestTime) > 5000) {
+      sendError("Time sync error reported by controller.");
+      requestTimeout = true;
+      break;
     }
     delay(5);
   }
 
-  while (XBee.available()) {
-    char c = XBee.read();
-    if (isDigit(c) == true) {
-      serialInput += c;
+  if (requestTimeout == false) {
+    String timeString = "";
+    while (XBee.available()) {
+      char c = XBee.read();
+      timeString += c;
+      delay(5);
     }
-    delay(5);
-  }
 
-  if (serialInput.startsWith("#") == true && serialInput.endsWith("#") == true) {
-    serialInput.remove(0, 1);
-    serialInput.remove(serialInput.indexOf('#'));
+    if (!timeString.startsWith("#") || !timeString.endsWith("x")) {
+      sendError("Invalid time string received after sync request.");
+    }
+    else {
+      // setTime(H, M, S, d, m, y)
+      setTime(
+        timeString.substring((timeString.indexOf('H') + 1), timeString.indexOf('M')).toInt(), // Hour
+        timeString.substring((timeString.indexOf('M') + 1), timeString.indexOf('S')).toInt(), // Minute
+        timeString.substring((timeString.indexOf('S') + 1), timeString.lastIndexOf('#')).toInt(), // Second
+        timeString.substring((timeString.indexOf('d') + 1), timeString.indexOf('y')).toInt(), // Day
+        timeString.substring((timeString.indexOf('m') + 1), timeString.indexOf('d')).toInt(), // Month
+        timeString.substring((timeString.indexOf('y') + 1), timeString.indexOf('H')).toInt()  // Year
+      );
+    }
   }
-  else {
-    sendError("Invalid input received while setting time.");
-    return -1;
-  }
-
-  return serialInput.toInt();
 }
 
 void sendAlarm(String alarmType) {
@@ -502,13 +407,6 @@ void sendError(String errorMessage) {
   errorString += "@";
 
   XBee.print(errorString);
-
-  /*
-    XBee.println(F("^ME"));
-    //XBee.print(F("*ERROR* "));
-    XBee.println(errorMessage);
-    XBee.println(F("@"));
-  */
 }
 
 // XBee Buffer Flush Function

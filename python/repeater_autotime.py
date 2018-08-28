@@ -1,4 +1,5 @@
 import configparser
+import datetime
 # import io
 import logging
 # from multiprocessing import Process
@@ -16,6 +17,14 @@ config_path = '../config/config.ini'
 
 config = configparser.ConfigParser()
 config.read(config_path)
+
+
+# Trigger actions from received MQTT messages
+def trigger_action(target, action=None):
+    if target == "door":
+        pass
+    else:
+        logger.error('Unknown target variable passed to trigger_action().')
 
 
 # Function for updating dashboard values via MQTT
@@ -46,6 +55,16 @@ def mqtt_update(variable, value):
 # Callback for messages received from Cayenne
 def on_message(msg):
     logger.info('msg [on_message]: ' + str(msg))
+
+    logger.debug('msg.client_id: ' + msg.client_id)
+    logger.debug('msg.topic: ' + msg.topic)
+    logger.debug('msg.channel: ' + str(msg.channel))
+    logger.debug('msg.msg_id: ' + msg.msg_id)
+    logger.debug('msg.value: ' + msg.value)
+
+    # If door button channel, trigger door open/close via serial
+    if msg.channel == 5:
+        trigger_action("door")
 
 
 def process_message(msg):
@@ -78,12 +97,24 @@ def process_message(msg):
 
             [mqtt_update(update[0], update[1]) for update in updates]
 
+        elif start_char == '#':
+            if msg_decoded == '#TS#':
+                dt_current = datetime.datetime.now()
+                time_message = dt_current.strftime('#m%md%dy%YH%HM%MS%S#')
+                ser.write(time_message)
+            else:
+                logger.error('Unrecognized time sync message received from controller.')
+
     except Exception as e:
         logger.exception(e)
         process_return['success'] = False
 
     finally:
         return process_return
+
+
+def log_data():
+    pass
 
 
 if __name__ == '__main__':
@@ -104,6 +135,8 @@ if __name__ == '__main__':
     new_msg = False
 
     while (True):
+        # mqtt_client.loop()
+
         if ser.in_waiting > 0:
             c = ser.read()
             if c == b'@' or c == b'^' or c == b'&':

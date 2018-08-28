@@ -9,7 +9,7 @@
 //#define buzzerPin 9
 
 const byte alarmCycles = 3;
-const int heartbeatTimeout = 30000;
+const int heartbeatTimeout = 31000;
 
 bool doorAlarm = false;
 unsigned long heartbeatLast = 0;
@@ -48,6 +48,10 @@ void loop() {
     while (XBee.available()) {
       char c = XBee.read();
       if (count == 0 && c == '@') {
+        //flushBuffer(true);
+        bypassProcessing = true;
+      }
+      else if (count == 0 && c == '#') {
         //flushBuffer(true);
         bypassProcessing = true;
       }
