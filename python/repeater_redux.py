@@ -60,8 +60,8 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             msg = ''
             while ser.in_waiting > 0:
-                msg = ser.read()
-                # msg += c
+                c = ser.read()
+                msg += c
                 # logger.debug('msg: ' + str(msg))
             logger.debug('msg: ' + str(msg))
 
