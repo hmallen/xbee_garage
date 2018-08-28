@@ -41,7 +41,7 @@ if __name__ == '__main__':
     ser = serial.Serial(
         port='/dev/ttyUSB0',
         baudrate=9600,
-        # timeout=1
+        timeout=0.5
     )
 
     config = configparser.ConfigParser()
@@ -58,11 +58,11 @@ if __name__ == '__main__':
     while (True):
         if ser.in_waiting > 0:
             msg = b''
-            while ser.in_waiting > 0:
-                c = ser.read()
-                msg += c
-                # logger.debug('msg: ' + str(msg))
-                time.sleep(0.01)
+            # while ser.in_waiting > 0:
+            msg = ser.read(size=10000)
+            # msg += c
+            # logger.debug('msg: ' + str(msg))
+            # time.sleep(0.01)
             logger.debug('msg: ' + str(msg))
 
             msg_decoded = msg.decode()
