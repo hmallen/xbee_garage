@@ -1,8 +1,7 @@
 import configparser
+import io
 import logging
-# from pprint import pprint
 import serial
-# import sys
 import time
 
 import cayenne.client
@@ -63,6 +62,7 @@ if __name__ == '__main__':
                 c = ser.read()
                 msg += c
                 # logger.debug('msg: ' + str(msg))
+                time.sleep(0.01)
             logger.debug('msg: ' + str(msg))
 
             msg_decoded = msg.decode()
