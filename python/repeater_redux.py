@@ -58,10 +58,10 @@ if __name__ == '__main__':
 
     while (True):
         if ser.in_waiting > 0:
-            msg = b''
+            # msg = b''
             while ser.in_waiting > 0:
-                c = ser.read()
-                msg += c
+                msg = ser.read()
+                # msg += c
                 # logger.debug('msg: ' + str(msg))
 
             msg_decoded = msg.decode()

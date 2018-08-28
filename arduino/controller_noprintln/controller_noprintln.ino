@@ -228,26 +228,32 @@ void checkUpdates() {
     3) $ - Variable Value Start
     4) Variable Value
   */
+  bool updateRequired = false;
+
   String updateString = "&U";
   if (doorOpen != doorOpenLast) {
     updateString += "%doorOpen$" + String(doorOpen);
     doorOpenLast = doorOpen;
+    updateRequired = true;
   }
   if (lockStateDoor != lockStateDoorLast) {
     updateString += "%lockStateDoor$" + String(lockStateDoor);
     lockStateDoorLast = lockStateDoor;
+    updateRequired = true;
   }
   if (lockStateButton != lockStateButtonLast) {
     updateString += "%lockStateButton$" + String(lockStateButton);
     lockStateButtonLast = lockStateButton;
+    updateRequired = true;
   }
   if (doorAlarm != doorAlarmLast) {
     updateString += "%doorAlarm$" + String(doorAlarm);
     doorAlarmLast = doorAlarm;
+    updateRequired = true;
   }
   updateString += "&";
 
-  XBee.print(updateString);
+  if (updateRequired == true) XBee.print(updateString);
 }
 
 void triggerDoor() {
@@ -524,4 +530,3 @@ void rangeTest() {
   //XBee.println(F("Range test complete."));
   XBee.print(F("^MGRange test complete.@"));
 }
-
