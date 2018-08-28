@@ -71,7 +71,7 @@ def process_message(msg):
             else:
                 logger.error('Unrecognized end character in command from controller --> remote')
         elif start_char == '&':
-            updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:].split('%')]
+            updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:-1].split('%')]
             logger.debug('updates: ' + str(updates))
 
             logger.info('Updating values via MQTT.')
