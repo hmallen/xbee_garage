@@ -109,6 +109,8 @@ if __name__ == '__main__':
 
             # Rebroadcast message for remote units, if necessary (repeater function)
             if rebroadcast_msg == True:
+                logger.debug('Rebroadcasting message.')
+
                 ser.write(msg)
 
         time.sleep(0.01)
