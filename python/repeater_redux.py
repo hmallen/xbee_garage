@@ -63,6 +63,7 @@ if __name__ == '__main__':
                 msg = ser.read()
                 # msg += c
                 # logger.debug('msg: ' + str(msg))
+            logger.debug('msg: ' + str(msg))
 
             msg_decoded = msg.decode()
             logger.debug('msg_decoded: ' + msg_decoded)
@@ -102,7 +103,5 @@ if __name__ == '__main__':
             # Rebroadcast message for remote units, if necessary (repeater function)
             if rebroadcast_msg == True:
                 pass
-
-        print(msg)
 
         time.sleep(0.01)
