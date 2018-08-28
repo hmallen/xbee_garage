@@ -123,6 +123,9 @@ if __name__ == '__main__':
             elif new_msg is True:
                 msg += c
             else:
-                logger.warning('Orphaned character in serial buffer: ' + str(c))
+                logger.warning('Orphaned character(s) in serial buffer. Flushing buffer.')
+                while ser.in_waiting > 0:
+                    orph = ser.read()
+                    logger.debug('orph: ' + str(orph))
 
         time.sleep(0.01)
