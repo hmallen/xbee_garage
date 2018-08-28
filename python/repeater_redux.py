@@ -58,6 +58,7 @@ if __name__ == '__main__':
     while (True):
         if ser.in_waiting > 0:
             logger.debug('byte_count: ' + str(ser.in_waiting))
+            time.sleep(0.01)
 
             msg = b''
             # while ser.in_waiting > 0:
