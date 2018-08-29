@@ -164,7 +164,8 @@ if __name__ == '__main__':
 
     # Request starting values from controller and update
     logger.info('Requesting full data update from controller.')
-    update_request = '@UA^'
+    # update_request = '@UA^'
+    update_request = '@UF^'
     bytes_written = ser.write(update_request.encode('utf-8'))
     logger.debug('bytes_written: ' + str(bytes_written))
 
