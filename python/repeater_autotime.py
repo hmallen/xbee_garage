@@ -21,8 +21,28 @@ config.read(config_path)
 
 # Trigger actions from received MQTT messages
 def trigger_action(target, action=None):
-    if target == "door":
-        pass
+    trigger_success = True
+
+    if target == 'door':
+        logger.debug('Constructing door ' + action + ' command.')
+
+        door_command = '@D'
+        if action == 'open':
+            door_command += 'O'
+        elif action == 'close':
+            door_command += 'C'
+        else:
+            logger.error('Unrecognized action variable passed to trigger_action().')
+            trigger_success = False
+
+        if trigger_success == True:
+            door_command += '^'
+
+        door_command = door_command.encode('utf-8')
+        logger.debug('door_command: ' + str(door_command))
+
+        logger.info('Sending door ' + action + ' command.')
+        ser.write(door_command)
     else:
         logger.error('Unknown target variable passed to trigger_action().')
 
@@ -64,7 +84,11 @@ def on_message(msg):
 
     # If door button channel, trigger door open/close via serial
     if msg.channel == 5:
-        trigger_action("door")
+        logger.info('Received door open command via MQTT.')
+        trigger_action('door', 'open')
+    elif msg.channel == 6:
+        logger.info('Received door close command via MQTT.')
+        trigger_action('door', 'close')
 
 
 def process_message(msg):
