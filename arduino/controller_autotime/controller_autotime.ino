@@ -358,14 +358,19 @@ void syncTime() {
   XBee.print("#TS#");
 
   bool requestTimeout = false;
-  unsigned long requestTime = millis();
-  while (!XBee.available()) {
-    if ((millis() - requestTime) > 5000) {
-      sendError("Time sync error reported by controller.");
-      requestTimeout = true;
-      break;
+
+  if (!XBee.available()) {
+    Serial.print(F("Waiting for date/time update..."));
+    unsigned long requestTime = millis();
+    while (!XBee.available()) {
+      if ((millis() - requestTime) > 30000) {
+        sendError("Time sync error reported by controller.");
+        requestTimeout = true;
+        break;
+      }
+      delay(5);
     }
-    delay(5);
+    Serial.println(F("received."));
   }
 
   if (requestTimeout == false) {
@@ -376,10 +381,12 @@ void syncTime() {
       delay(5);
     }
 
-    if (!timeString.startsWith("#") || !timeString.endsWith("x")) {
+    if (!timeString.startsWith("#") || !timeString.endsWith("#")) {
       sendError("Invalid time string received after sync request.");
     }
     else {
+      Serial.println(F("Setting date/time."));
+
       // setTime(H, M, S, d, m, y)
       setTime(
         timeString.substring((timeString.indexOf('H') + 1), timeString.indexOf('M')).toInt(), // Hour
@@ -391,6 +398,7 @@ void syncTime() {
       );
     }
   }
+  else Serial.println(F("Request for date/time timed-out."));
 }
 
 String formatDigit(int digit) {

@@ -174,6 +174,14 @@ def update_log():
 
 
 if __name__ == '__main__':
+    # Flush serial receive buffer to start fresh
+    if ser.in_waiting > 0:
+        logger.info('Flushing serial buffer.')
+
+        while ser.in_waiting > 0:
+            c = ser.read()
+            time.sleep(0.01)
+
     garage_state = {
         'doorOpen': None,
         'lastOpened': None,
