@@ -1,0 +1,10 @@
+﻿MQ
+==
+2 - Methane, Butane, LPG, Smoke
+4 - Methane, CNG
+7 - Carbon Monoxide
+8 - Hydrogen
+9 - Carbon Monoxide, Flammable Gasses
+135 - Air Quality (Benzene, Alcohol, Smoke)
+???
+???

@@ -159,9 +159,9 @@ void ledAlarm(String alarmType, byte cycles) {
   }
   else if (alarmType == "heartbeat") {
     for (byte x = 0; x < cycles; x++) {
-      delay(100);
+      delay(50);
       digitalWrite(ledRed, HIGH);
-      delay(100);
+      delay(50);
       digitalWrite(ledRed, LOW);
     }
   }

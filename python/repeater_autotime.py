@@ -6,6 +6,7 @@ import serial
 import time
 
 import cayenne.client
+from pymongo import MongoClient
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -21,6 +22,16 @@ mqtt_password = config['mqtt']['password']
 mqtt_client_id = config['mqtt']['client_id']
 
 mqtt_client = cayenne.client.CayenneMQTTClient()
+
+mongo_uri = config['mongodb']['uri']
+mongo_db = config['mongodb']['database']
+
+collections = {
+    'log': config['mongodb']['collection_log'],
+    'state': config['mongodb']['collection_state']
+}
+
+db = MongoClient(mongo_uri)[mongo_db]
 
 ser = serial.Serial(
     port='/dev/ttyUSB0',
@@ -41,6 +52,8 @@ def trigger_action(target, action=None):
             door_command += 'O'
         elif action == 'close':
             door_command += 'C'
+        elif action == None:
+            door_command += 'F'
         else:
             logger.error('Unrecognized action variable passed to trigger_action().')
             command_success = False
@@ -61,6 +74,8 @@ def trigger_action(target, action=None):
 
 # Function for updating dashboard values via MQTT
 def mqtt_update(variable, value):
+    update_ready = True
+
     channel = None
     data_type = 'null'
     data_unit = None
@@ -74,14 +89,17 @@ def mqtt_update(variable, value):
     elif variable == 'lockStateButton':
         channel = 3
         data_unit = 'd'
-    elif variable == 'doorAlarm':
+    elif variable == 'doorAlarmActive':
         channel = 4
         data_unit = 'd'
     elif variable == 'heartbeatLast':
-        pass
+        update_ready = False
 
-    logger.debug('Updating "' + variable + '" via MQTT.')
-    mqtt_client.virtualWrite(channel, value, data_type, data_unit)
+    if update_ready is True:
+        logger.debug('Updating "' + variable + '" via MQTT.')
+        mqtt_client.virtualWrite(channel, value, data_type, data_unit)
+    else:
+        logger.debug('Skipping "' + variable + '" update.')
 
 
 # Callback for messages received from Cayenne
@@ -96,11 +114,8 @@ def on_message(msg):
 
     # If door button channel, trigger door open/close via serial
     if msg.channel == 5:
-        logger.info('Received door open command via MQTT.')
-        trigger_action('door', 'open')
-    elif msg.channel == 6:
-        logger.info('Received door close command via MQTT.')
-        trigger_action('door', 'close')
+        logger.info('Received door trigger command via MQTT.')
+        trigger_action('door')
 
 
 def process_message(msg):
@@ -150,11 +165,23 @@ def process_message(msg):
         return process_return
 
 
-def log_data():
+def update_state(key, value):
+    garage_state[key] = value
+
+
+def update_log():
     pass
 
 
 if __name__ == '__main__':
+    garage_state = {
+        'doorOpen': None,
+        'lastOpened': None,
+        'lockStateDoor': None,
+        'lockStateButton': None,
+        'doorAlarmActive': None
+    }
+
     mqtt_client.on_message = on_message
     mqtt_client.begin(mqtt_username, mqtt_password, mqtt_client_id)
 
@@ -164,8 +191,9 @@ if __name__ == '__main__':
 
     # Request starting values from controller and update
     logger.info('Requesting full data update from controller.')
-    # update_request = '@UA^'
-    update_request = '@UF^'
+    # update_request = '@UF^'
+    update_request = '@UA^'
+    logger.debug('update_request: ' + str(update_request))
     bytes_written = ser.write(update_request.encode('utf-8'))
     logger.debug('bytes_written: ' + str(bytes_written))
 

@@ -22,7 +22,7 @@ bool lockStateButton = false;
 
 time_t lastOpened;
 
-bool doorAlarm = false;
+bool doorAlarmActive = false;
 bool waitingAcknowledge = false;
 unsigned long acknowledgeTime;
 
@@ -31,7 +31,7 @@ unsigned long acknowledgeTime;
 bool doorOpenLast = doorOpen;
 bool lockStateDoorLast = lockStateDoor;
 bool lockStateButtonLast = lockStateButton;
-bool doorAlarmLast = doorAlarm;
+bool doorAlarmActiveLast = doorAlarmActive;
 
 SoftwareSerial XBee(xbeeRx, xbeeTx);
 
@@ -52,6 +52,8 @@ void setup() {
   XBee.begin(9600);
 
   flushBuffer(true);  // Flush any characters that may be in XBee receive buffer
+
+  timeFunction("sync");
 }
 
 void loop() {
@@ -141,6 +143,10 @@ void processCommand(String command) {
       //else XBee.println(F("Door already closed."));
       else XBee.print(F("^MGDoor already closed.@"));
     }
+    else if (action == 'F') {
+      // Force trigger of door, regardless of current state
+      triggerDoor();
+    }
     else if (action == 'L') {
       // Lock door
       toggleLockout("door", true);
@@ -174,12 +180,12 @@ void processCommand(String command) {
   else if (identifier == 'A') {
     if (action == 'A') {
       // Activate door alarm if currently inactive
-      if (doorAlarm == false) doorAlarm = true;
+      if (doorAlarmActive == false) doorAlarmActive = true;
       else sendError("Door alarm already active.");
     }
     else if (action == 'D') {
       // Deactivate door alarm if currently active
-      if (doorAlarm == true) doorAlarm = false;
+      if (doorAlarmActive == true) doorAlarmActive = false;
       else sendError("Door alarm already inactive.");
     }
     else if (action == 'K') {
@@ -190,7 +196,7 @@ void processCommand(String command) {
   }
 
   else if (identifier == 'U') {
-    if (action == 'F') {
+    if (action == 'A') {
       checkUpdates(true);
     }
     else sendError("Invalid ACTION while processing UPDATE command.");
@@ -225,18 +231,18 @@ void sendStatus() {
   XBee.print(statusMessage);
 
   statusMessage = "^MSDoor Alarm:  ";
-  if (doorAlarm == true) statusMessage += "ACTIVE";
+  if (doorAlarmActive == true) statusMessage += "ACTIVE";
   else statusMessage += "INACTIVE";
   statusMessage += "@";
   XBee.print(statusMessage);
 }
 
-void checkUpdates(bool sendFull) {
+void checkUpdates(bool sendAll) {
   /*
     bool doorOpenLast = doorOpen;
     bool lockStateDoorLast = lockStateDoor;
     bool lockStateButtonLast = lockStateButton;
-    bool doorAlarmLast = doorAlarm;
+    bool doorAlarmActiveLast = doorAlarmActive;
 
     Command Format:
     %doorOpen$true
@@ -246,21 +252,21 @@ void checkUpdates(bool sendFull) {
     4) Variable Value
   */
   String updateString = "&U";
-  if (doorOpen != doorOpenLast || sendFull == true) {
+  if (doorOpen != doorOpenLast || sendAll == true) {
     updateString += "%doorOpen$" + String(doorOpen);
     doorOpenLast = doorOpen;
   }
-  if (lockStateDoor != lockStateDoorLast || sendFull == true) {
+  if (lockStateDoor != lockStateDoorLast || sendAll == true) {
     updateString += "%lockStateDoor$" + String(lockStateDoor);
     lockStateDoorLast = lockStateDoor;
   }
-  if (lockStateButton != lockStateButtonLast || sendFull == true) {
+  if (lockStateButton != lockStateButtonLast || sendAll == true) {
     updateString += "%lockStateButton$" + String(lockStateButton);
     lockStateButtonLast = lockStateButton;
   }
-  if (doorAlarm != doorAlarmLast || sendFull == true) {
-    updateString += "%doorAlarm$" + String(doorAlarm);
-    doorAlarmLast = doorAlarm;
+  if (doorAlarmActive != doorAlarmActiveLast || sendAll == true) {
+    updateString += "%doorAlarmActive$" + String(doorAlarmActive);
+    doorAlarmActiveLast = doorAlarmActive;
   }
   updateString += "&";
 
@@ -272,7 +278,6 @@ void triggerDoor() {
   digitalWrite(doorRelay, HIGH);
   delay(100);
   digitalWrite(doorRelay, LOW);
-  //XBee.print(F("complete.@"));
 }
 
 void toggleLockout(String lock, bool lockAction) {
@@ -348,15 +353,6 @@ void timeFunction(String timeAction) {
   else sendError("Unrecognized action in timeFunction().");
 }
 
-String formatDigit(int digit) {
-  String digitString = "";
-  if (digit < 10 || digit == 0) {
-    digitString += "0";
-  }
-  digitString += String(digit);
-  return digitString;
-}
-
 // Sync date/time from RPi repeater by request
 void syncTime() {
   XBee.print("#TS#");
@@ -395,6 +391,15 @@ void syncTime() {
       );
     }
   }
+}
+
+String formatDigit(int digit) {
+  String digitString = "";
+  if (digit < 10 || digit == 0) {
+    digitString += "0";
+  }
+  digitString += String(digit);
+  return digitString;
 }
 
 void sendAlarm(String alarmType) {
@@ -442,7 +447,7 @@ void doorCheck() {
   if (doorOpen == true) {
     if (timeNotSet == false) lastOpened = now();
 
-    if (doorAlarm == true) {
+    if (doorAlarmActive == true) {
       sendAlarm("door");
       acknowledgeTime = millis();
       waitingAcknowledge = true;
