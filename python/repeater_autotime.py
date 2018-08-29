@@ -200,7 +200,7 @@ if __name__ == '__main__':
     while (True):
         if ser.in_waiting > 0:
             c = ser.read()
-            if c == b'@' or c == b'^' or c == b'&':
+            if c == b'@' or c == b'^' or c == b'&' or c == b'#':
                 if new_msg is False:
                     new_msg = True
                     msg = c
@@ -213,7 +213,7 @@ if __name__ == '__main__':
                         if process_result['rebroadcast'] is True:
                             bytes_written = ser.write(process_result['message'])
                             logger.debug('bytes_written: ' + str(bytes_written))
-                            time.sleep(0.05)
+                            # time.sleep(0.05)
                     else:
                         logger.error('Error while processing message.')
             elif new_msg is True:
@@ -226,4 +226,4 @@ if __name__ == '__main__':
 
         mqtt_client.loop()
 
-        time.sleep(0.01)
+        time.sleep(0.1)
