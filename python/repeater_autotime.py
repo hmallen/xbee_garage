@@ -12,6 +12,8 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+mqtt_loop_interval = 10
+
 config_path = '../config/config.ini'
 
 config = configparser.ConfigParser()
@@ -232,6 +234,8 @@ if __name__ == '__main__':
                     orph_char = ser.read()
                     logger.debug('orph_char: ' + str(orph_char))
 
-        mqtt_client.loop()
+        if (time.time() - mqtt_update_last) > mqtt_loop_interval:
+            mqtt_client.loop()
+            mqtt_update_last = time.time()
 
         time.sleep(0.1)
