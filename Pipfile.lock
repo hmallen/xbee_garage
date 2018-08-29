@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e5f1d9d808409db7dac55a8aaa660243e2cea7ffea2730e502ea6792b5f84bb4"
+            "sha256": "ec9a2fead3b1f38e96210690854027eba9b88f8e3255c62f7b0ab87b808d58f3"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,13 @@
         ]
     },
     "default": {
+        "awsiotpythonsdk": {
+            "hashes": [
+                "sha256:b3c8af3ce24eab861447a194f3c382509dd70e90452c86a5426f1e7272460177"
+            ],
+            "index": "pypi",
+            "version": "==1.4.0"
+        },
         "cayenne-mqtt": {
             "hashes": [
                 "sha256:4a271557809eaa841a5c57c3c879d4ecf7bb868202fad355e51d4810106123e3"

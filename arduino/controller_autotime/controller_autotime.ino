@@ -276,7 +276,7 @@ void checkUpdates(bool sendAll) {
 void triggerDoor() {
   XBee.print(F("^MGTriggering garage door.@"));
   digitalWrite(doorRelay, HIGH);
-  delay(100);
+  delay(250);
   digitalWrite(doorRelay, LOW);
 }
 
