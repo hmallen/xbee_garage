@@ -196,6 +196,7 @@ if __name__ == '__main__':
     mqtt_client.begin(mqtt_username, mqtt_password, mqtt_client_id)
 
     mqtt_client.loop()
+    mqtt_loop_last = time.time()
 
     new_msg = False
 
@@ -234,8 +235,8 @@ if __name__ == '__main__':
                     orph_char = ser.read()
                     logger.debug('orph_char: ' + str(orph_char))
 
-        if (time.time() - mqtt_update_last) > mqtt_loop_interval:
+        if (time.time() - mqtt_loop_last) > mqtt_loop_interval:
             mqtt_client.loop()
-            mqtt_update_last = time.time()
+            mqtt_loop_last = time.time()
 
         time.sleep(0.1)
