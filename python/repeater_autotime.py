@@ -152,7 +152,7 @@ def process_message(msg):
             if msg_decoded == '#TS#':
                 dt_current = datetime.datetime.now()
                 time_message = dt_current.strftime('#m%md%dy%YH%HM%MS%S#')
-                bytes_written = ser.write(time_message)
+                bytes_written = ser.write(time_message.encode('utf-8'))
                 logger.debug('bytes_written: ' + str(bytes_written))
             else:
                 logger.error('Unrecognized time sync message received from controller.')
