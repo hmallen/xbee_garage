@@ -159,7 +159,7 @@ if __name__ == '__main__':
     new_msg = False
 
     while (True):
-        # mqtt_client.loop()
+        mqtt_client.loop()
 
         if ser.in_waiting > 0:
             c = ser.read()
