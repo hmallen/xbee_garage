@@ -360,7 +360,7 @@ void syncTime() {
   bool requestTimeout = false;
 
   if (!XBee.available()) {
-    Serial.print(F("Waiting for date/time update..."));
+    Serial.print(F("Waiting for date/time serial data..."));
     unsigned long requestTime = millis();
     while (!XBee.available()) {
       if ((millis() - requestTime) > 30000) {

@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         while ser.in_waiting > 0:
             c = ser.read()
-            time.sleep(0.01)
+            time.sleep(0.1)
 
     garage_state = {
         'doorOpen': None,
