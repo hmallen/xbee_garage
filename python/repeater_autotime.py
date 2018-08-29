@@ -1,8 +1,6 @@
 import configparser
 import datetime
-# import io
 import logging
-# from multiprocessing import Process
 import serial
 # import sys
 import time
@@ -18,10 +16,22 @@ config_path = '../config/config.ini'
 config = configparser.ConfigParser()
 config.read(config_path)
 
+mqtt_username = config['mqtt']['username']
+mqtt_password = config['mqtt']['password']
+mqtt_client_id = config['mqtt']['client_id']
+
+mqtt_client = cayenne.client.CayenneMQTTClient()
+
+ser = serial.Serial(
+    port='/dev/ttyUSB0',
+    baudrate=9600,
+    # stimeout=0.5
+)
+
 
 # Trigger actions from received MQTT messages
 def trigger_action(target, action=None):
-    trigger_success = True
+    command_success = True
 
     if target == 'door':
         logger.debug('Constructing door ' + action + ' command.')
@@ -33,16 +43,18 @@ def trigger_action(target, action=None):
             door_command += 'C'
         else:
             logger.error('Unrecognized action variable passed to trigger_action().')
-            trigger_success = False
+            command_success = False
 
-        if trigger_success == True:
+        if command_success is True:
             door_command += '^'
+            door_command = door_command.encode('utf-8')
+            logger.debug('door_command: ' + str(door_command))
 
-        door_command = door_command.encode('utf-8')
-        logger.debug('door_command: ' + str(door_command))
+            logger.info('Sending door ' + action + ' command.')
+            ser.write(door_command)
 
-        logger.info('Sending door ' + action + ' command.')
-        ser.write(door_command)
+        else:
+            logger.error('Error while constructing command. No command sent.')
     else:
         logger.error('Unknown target variable passed to trigger_action().')
 
@@ -125,7 +137,8 @@ def process_message(msg):
             if msg_decoded == '#TS#':
                 dt_current = datetime.datetime.now()
                 time_message = dt_current.strftime('#m%md%dy%YH%HM%MS%S#')
-                ser.write(time_message)
+                bytes_written = ser.write(time_message)
+                logger.debug('bytes_written: ' + str(bytes_written))
             else:
                 logger.error('Unrecognized time sync message received from controller.')
 
@@ -142,25 +155,20 @@ def log_data():
 
 
 if __name__ == '__main__':
-    mqtt_username = config['mqtt']['username']
-    mqtt_password = config['mqtt']['password']
-    mqtt_client_id = config['mqtt']['client_id']
-
-    mqtt_client = cayenne.client.CayenneMQTTClient()
     mqtt_client.on_message = on_message
     mqtt_client.begin(mqtt_username, mqtt_password, mqtt_client_id)
 
-    ser = serial.Serial(
-        port='/dev/ttyUSB0',
-        baudrate=9600,
-        # stimeout=0.5
-    )
+    mqtt_client.loop()
 
     new_msg = False
 
-    while (True):
-        mqtt_client.loop()
+    # Request starting values from controller and update
+    logger.info('Requesting full data update from controller.')
+    update_request = '@UA^'
+    bytes_written = ser.write(update_request.encode('utf-8'))
+    logger.debug('bytes_written: ' + str(bytes_written))
 
+    while (True):
         if ser.in_waiting > 0:
             c = ser.read()
             if c == b'@' or c == b'^' or c == b'&':
@@ -184,7 +192,9 @@ if __name__ == '__main__':
             else:
                 logger.warning('Orphaned character(s) in serial buffer. Flushing buffer.')
                 while ser.in_waiting > 0:
-                    orph = ser.read()
-                    logger.debug('orph: ' + str(orph))
+                    orph_char = ser.read()
+                    logger.debug('orph_char: ' + str(orph_char))
+
+        mqtt_client.loop()
 
         time.sleep(0.01)
