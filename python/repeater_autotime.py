@@ -47,7 +47,7 @@ def trigger_action(target, action=None):
     command_success = True
 
     if target == 'door':
-        logger.debug('Constructing door ' + action + ' command.')
+        logger.debug('Constructing door ' + str(action) + ' command.')
 
         door_command = '@D'
         if action == 'open':
@@ -65,7 +65,7 @@ def trigger_action(target, action=None):
             door_command = door_command.encode('utf-8')
             logger.debug('door_command: ' + str(door_command))
 
-            logger.info('Sending door ' + action + ' command.')
+            logger.info('Sending door ' + str(action) + ' command.')
             ser.write(door_command)
 
         else:
