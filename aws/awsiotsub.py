@@ -23,13 +23,13 @@ def on_message(client, userdata, msg):
     print("topic: "+msg.topic)
     print("payload: "+str(msg.payload))
 
-def on_log(client, userdata, level, msg):
-    print(msg.topic+" "+str(msg.payload))
+# def on_log(client, userdata, level, msg):
+    # print(msg.topic+" "+str(msg.payload))
 
 mqttc = paho.Client()
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
-mqttc.on_log = on_log
+# mqttc.on_log = on_log
 
 awshost = "a1oqi4ny53myjs.iot.us-east-1.amazonaws.com"
 awsport = 8883
