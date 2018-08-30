@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+  
+  <!-- Licensed under the Apache 2.0 License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/open-sans/stylesheet.css" />
+  <!-- Licensed under the SIL Open Font License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/source-serif-pro/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap-theme.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>Lambda &mdash; Greengrass Docs 1.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/guzzle.css" type="text/css" />
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="https://media.readthedocs.org/css/badge_only.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/underscore.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/doctools.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/readthedocs-doc-embed.js"></script>
+    <link rel="top" title="Greengrass Docs 1.2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Available Services" href="index.html" />
+
+   
+
+  
+<!-- RTD Extra Head -->
+
+<!-- 
+Always link to the latest version, as canonical.
+http://docs.readthedocs.org/en/latest/canonical.html
+-->
+<link rel="canonical" href="http://boto3.readthedocs.io/en/latest/reference/services/lambda.html" />
+
+<link rel="stylesheet" href="https://media.readthedocs.org/css/readthedocs-doc-embed.css" type="text/css" />
+
+<script type="text/javascript" src="../../_static/readthedocs-data.js"></script>
+
+<!-- Add page-specific data, which must exist in the page js, not global -->
+<script type="text/javascript">
+READTHEDOCS_DATA['page'] = 'reference/services/lambda'
+</script>
+
+<script type="text/javascript" src="https://boto3.readthedocs.io/en/latest/_static/readthedocs-dynamic-include.js"></script>
+
+<!-- end RTD <extrahead> --></head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="logs.html" title="CloudWatchLogs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kms.html" title="KMS"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Greengrass Docs 1.2.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Available Services</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="container-wrapper">
+
+      <div id="mobile-toggle">
+        <a href="#"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></a>
+      </div>
+  <div id="left-column">
+    <div class="sphinxsidebar"><a href="
+    index.html" class="text-logo">Greengrass SDK Docs 1.2.0 documentation</a><div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Table Of Contents</h2>
+  </div>
+  <div class="sidebar-toc">
+    
+    
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Available Services</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="iot-data.html">IoTDataPlane</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Lambda</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#client">Client</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+    
+  </div>
+</div>
+      
+    </div>
+  </div>
+        <div id="right-column">
+          
+
+          <div role="navigation" aria-label="breadcrumbs navigation">
+            <ol class="breadcrumb">
+              <li><a href="index.html">Docs</a></li>
+              
+                <li><a href="index.html">Available Services</a></li>
+              
+              <li>Lambda</li>
+            </ol>
+          </div>
+          
+<!--REGION_DISCLAIMER_DO_NOT_REMOVE-->
+          <div class="document clearer body">
+            
+  <div class="section" id="lambda">
+<h1><a class="toc-backref" href="#id1">Lambda</a><a class="headerlink" href="#lambda" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#lambda" id="id1">Lambda</a><ul>
+<li><a class="reference internal" href="#client" id="id2">Client</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="client">
+<h2><a class="toc-backref" href="#id2">Client</a><a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="Lambda.Client">
+<em class="property">class </em><tt class="descclassname">Lambda.</tt><tt class="descname">Client</tt><a class="headerlink" href="#Lambda.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>A low-level client to interact locally with the AWS Greengrass Core in order to invoke other deployed Lambda functions.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">greengrasssdk</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">greengrasssdk</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;lambda&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These are the available methods:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#Lambda.Client.invoke" title="Lambda.Client.invoke"><tt class="xref py py-meth docutils literal"><span class="pre">invoke()</span></tt></a></li>
+</ul>
+
+<dl class="method">
+<dt id="Lambda.Client.invoke">
+<tt class="descname">invoke</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#Lambda.Client.invoke" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invokes a specific Lambda function.</p>
+<p>In <tt class="docutils literal"><span class="pre">AWS Greengrass</span></tt>, you will need to specify the version that is deployed to Greengrass Core when invoking them by using the Qualifier field.</p>
+<p><strong>Request Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="n">FunctionName</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span>
+    <span class="n">InvocationType</span><span class="o">=</span><span class="s1">&#39;Event&#39;</span><span class="o">|</span><span class="s1">&#39;RequestResponse&#39;</span>,</span>
+    <span class="n">ClientContext</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span>
+    <span class="n">Payload</span><span class="o">=</span><span class="n">b</span><span class="s1">&#39;bytes&#39;</span><span class="p">,</span>
+    <span class="n">Qualifier</span><span class="o">=</span><span class="s1">&#39;string&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<dl class="docutils field-list" frame="void" rules="none">
+<dt class="field-name">Parameters</dt><dd class="field-body"><ul class="first simple">
+<li><strong>FunctionName</strong> (<em>string</em>) -- <p><strong>[REQUIRED]</strong></p>
+<p>The Lambda function name.</p>
+<p>You can specify Amazon Resource Name (ARN) of the function (for example, <tt class="docutils literal"><span class="pre">arn:aws:lambda:us-west-2:account-id:function:ThumbNail:1</span></tt> ).</p>
+</li>
+<li><strong>InvocationType</strong> (<em>string</em>) -- With <tt class="docutils literal"><span class="pre">AWS Greengrass</span></tt>, by default, the <tt class="docutils literal"><span class="pre">Invoke</span></tt> API assumes <tt class="docutils literal"><span class="pre">RequestResponse</span></tt> invocation type. You can optionally request asynchronous execution by specifying <tt class="docutils literal"><span class="pre">Event</span></tt> as the <tt class="docutils literal"><span class="pre">InvocationType</span></tt>.
+</li>
+<li><strong>ClientContext</strong> (<em>string</em>) -- <p>Using the <tt class="docutils literal"><span class="pre">ClientContext</span></tt> you can pass client-specific information to the Lambda function you are invoking. You can then process the client information in your Lambda function as you choose through the context variable.</p>
+<p>The ClientContext JSON must be base64-encoded.</p>
+</li>
+<li><strong>Payload</strong> (<em>bytes</em>) -- JSON that you want to provide to your Lambda function as input. This can also be in binary if the target lambda is configured to accept the binary format. If the target lambda is not configured to receive binary payload and you send a binary payload as a RequestResponse invocation, you will receive an error message stating that the target lambda could not parse the payload as JSON. If the target lambda is configured to receive binary data type and invoker sends JSON data, it is converted into binary.</li>
+<li><strong>Qualifier</strong> (<em>string</em>) -- <p>You can use this parameter to specify a Lambda function version that you are trying to invoke. The function version needs to match the one that was downloaded to GGC.</p>
+</li>
+</ul>
+</dd>
+<dt class="field-name">Return type</dt><dd class="field-body"><p class="first">dict</p>
+</dd>
+<dt class="field-name">Returns</dt><dd class="field-body"><p class="first last"><p><strong>Response Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;Payload&#39;</span><span class="p">:</span> <span class="n">StreamingBody</span><span class="p">(),</span>
+    <span class="s1">&#39;FunctionError&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response Structure</strong></p>
+<ul>
+<li><p class="first"><em>(dict) --</em></p>
+<p>Upon success, returns an empty response. Otherwise, throws an exception.</p>
+<ul>
+<li><p class="first"><strong>Payload</strong> (<tt class="xref py py-class docutils literal"><span class="pre">StreamingBody</span></tt>) --</p>
+<p>It is the object returned by the Lambda function. This is present only if the invocation type is <tt class="docutils literal"><span class="pre">RequestResponse</span></tt> .</p>
+<p>In the event of a function error this field contains a message describing the error.</p>
+</li>
+<li><p class="first"><strong>FunctionError</strong> <em>(string) --</em></p>
+<p>Indicates whether an error occurred while executing the Lambda function. If an error occurred this field will have <tt class="docutils literal"><span class="pre">Handled</span></tt>. <tt class="docutils literal"><span class="pre">Handled</span></tt> errors are errors that are reported by the function.</p>
+</li>
+</ul>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+<p><strong>Examples</strong></p>
+<p>This operation invokes a Lambda function with client context</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s1">&#39;message&#39;</span><span class="o">:</span><span class="s1">&#39;foobar&#39;</span>
+<span class="p">})</span>
+
+<span class="n">client_context</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s1">&#39;custom&#39;</span><span class="o">:</span><span class="s1">&#39;custom text&#39;</span>
+<span class="p">})</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="n">ClientContext</span><span class="o">=</span><span class="p">base64.b64encode(bytes(</span><span class="s1">client_context</span><span class="p">))</span><span class="p">,</span>
+    <span class="n">FunctionName</span><span class="o">=</span><span class="s1">&#39;arn:aws:lambda:us-west-2:123451234510:function:MyFunction&#39;</span><span class="p">,</span>
+    <span class="n">InvocationType</span><span class="o">=</span><span class="s1">&#39;RequestResponse&#39;</span><span class="p">,</span>
+    <span class="n">Payload</span><span class="o">=</span><span class="s1">msg</span><span class="p">,</span>
+    <span class="n">Qualifier</span><span class="o">=</span><span class="s1">&#39;1&#39;</span>
+<span class="p">)</span>
+
+<span class="k">logger.info</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Expected Output:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;FunctionError&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Payload&#39;</span><span class="p">:</span> <span class="s1">&#39;?&#39;</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>This operation invokes a Lambda function with client context and non-JSON payload. It only works if the target lambda is configured to receive binary data type.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>
+
+<span class="n">client_context</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s1">&#39;custom&#39;</span><span class="o">:</span><span class="s1">&#39;custom text&#39;</span>
+<span class="p">})</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="n">ClientContext</span><span class="o">=</span><span class="p">base64.b64encode(bytes(</span><span class="s1">client_context</span><span class="p">))</span><span class="p">,</span>
+    <span class="n">FunctionName</span><span class="o">=</span><span class="s1">&#39;arn:aws:lambda:us-west-2:123451234510:function:MyFunction&#39;</span><span class="p">,</span>
+    <span class="n">InvocationType</span><span class="o">=</span><span class="s1">&#39;RequestResponse&#39;</span><span class="p">,</span>
+    <span class="n">Payload</span><span class="o">=</span><span class="s1">"Non-JSON Data"</span><span class="p">,</span>
+    <span class="n">Qualifier</span><span class="o">=</span><span class="s1">&#39;1&#39;</span>
+<span class="p">)</span>
+
+<span class="k">logger.info</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Expected Output:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;FunctionError&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Payload&#39;</span><span class="p">:</span> <span class="s1">&#39;?&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+</dd></dl>
+
+</div>
+
+</div>
+
+
+          </div>
+            
+  <div class="footer-relations">
+    
+    </div>
+    <div class="clearer"></div>
+  
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="logs.html" title="CloudWatchLogs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kms.html" title="KMS"
+             >previous</a> |</li>
+        <li><a href="../../index.html">Greengrass Core SDK 1.2.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Available Services</a> &raquo;</li> 
+      </ul>
+    </div>
+
+<script type="text/javascript">
+  $("#mobile-toggle a").click(function () {
+    $("#left-column").toggle();
+  });
+</script>
+<script type="text/javascript" src="../../_static/js/bootstrap.js"></script>
+  <div class="footer">
+    &copy; Copyright 2018, Amazon.com, Inc.. Created manually.
+  </div>
+<script type="text/javascript" src="https://media.amazonwebservices.com/js/sitecatalyst/s_code.min.js"></script>
+<script type="text/javascript">
+s.prop66 = 'AWS Greengrass SDK for Python';
+s.eVar66 = 'D=c66';
+s.prop65 = 'API Reference';
+s.eVar65 = 'D=c65';
+var s_code = s.t();
+if (s_code) document.write(s_code);
+</script>
+  </body>
+</html>
