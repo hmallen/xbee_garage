@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+  
+  <!-- Licensed under the Apache 2.0 License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/open-sans/stylesheet.css" />
+  <!-- Licensed under the SIL Open Font License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/source-serif-pro/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap-theme.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>IoTDataPlane &mdash; Greengrass Docs 1.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/guzzle.css" type="text/css" />
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="https://media.readthedocs.org/css/badge_only.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/underscore.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/doctools.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/readthedocs-doc-embed.js"></script>
+    <link rel="top" title="Greengrass Docs 1.2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Available Services" href="index.html" />
+    <link rel="next" title="Kinesis" href="kinesis.html" />
+    <link rel="prev" title="IoT" href="iot.html" />
+  
+   
+
+  
+<!-- RTD Extra Head -->
+
+<!-- 
+Always link to the latest version, as canonical.
+http://docs.readthedocs.org/en/latest/canonical.html
+-->
+<link rel="canonical" href="http://boto3.readthedocs.io/en/latest/reference/services/iot-data.html" />
+
+<link rel="stylesheet" href="https://media.readthedocs.org/css/readthedocs-doc-embed.css" type="text/css" />
+
+<script type="text/javascript" src="../../_static/readthedocs-data.js"></script>
+
+<!-- Add page-specific data, which must exist in the page js, not global -->
+<script type="text/javascript">
+READTHEDOCS_DATA['page'] = 'reference/services/iot-data'
+</script>
+
+<script type="text/javascript" src="https://boto3.readthedocs.io/en/latest/_static/readthedocs-dynamic-include.js"></script>
+
+<!-- end RTD <extrahead> --></head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kinesis.html" title="Kinesis"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="iot.html" title="IoT"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Greengrass Core SDK 1.2.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Available Services</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="container-wrapper">
+
+      <div id="mobile-toggle">
+        <a href="#"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></a>
+      </div>
+  <div id="left-column">
+    <div class="sphinxsidebar"><a href="
+    index.html" class="text-logo">Greengrass Core SDK 1.2.0 documentation</a><div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Table Of Contents</h2>
+  </div>
+  <div class="sidebar-toc">
+    
+    
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Available Services</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">IoTDataPlane</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#client">Client</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lambda.html">Lambda</a></li>
+</ul>
+</li>
+</ul>
+    
+  </div>
+</div>
+      
+    </div>
+  </div>
+        <div id="right-column">
+          
+
+          <div role="navigation" aria-label="breadcrumbs navigation">
+            <ol class="breadcrumb">
+              <li><a href="index.html">Docs</a></li>
+              
+                <li><a href="index.html">Available Services</a></li>
+              
+              <li>IoTDataPlane</li>
+            </ol>
+          </div>
+          
+<!--REGION_DISCLAIMER_DO_NOT_REMOVE-->
+          <div class="document clearer body">
+            
+  <div class="section" id="iotdataplane">
+<h1><a class="toc-backref" href="#id1">IoTDataPlane</a><a class="headerlink" href="#iotdataplane" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#iotdataplane" id="id1">IoTDataPlane</a><ul>
+<li><a class="reference internal" href="#client" id="id2">Client</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="client">
+<h2><a class="toc-backref" href="#id2">Client</a><a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="IoTDataPlane.Client">
+<em class="property">class </em><tt class="descclassname">IoTDataPlane.</tt><tt class="descname">Client</tt><a class="headerlink" href="#IoTDataPlane.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>A low-level client to interact locally with the AWS Greengrass Core in order to publish messages and use the local shadow service.
+This low-level client possesses the same interface as the one used in boto3 to interact with AWS IoT.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">greengrasssdk</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">greengrasssdk</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;iot-data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These are the available methods:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#IoTDataPlane.Client.get_thing_shadow" title="IoTDataPlane.Client.get_thing_shadow"><tt class="xref py py-meth docutils literal"><span class="pre">get_thing_shadow()</span></tt></a></li>
+<li><a class="reference internal" href="#IoTDataPlane.Client.publish" title="IoTDataPlane.Client.publish"><tt class="xref py py-meth docutils literal"><span class="pre">publish()</span></tt></a></li>
+<li><a class="reference internal" href="#IoTDataPlane.Client.update_thing_shadow" title="IoTDataPlane.Client.update_thing_shadow"><tt class="xref py py-meth docutils literal"><span class="pre">update_thing_shadow()</span></tt></a></li>
+</ul>
+
+<dl class="method">
+<dt id="IoTDataPlane.Client.get_thing_shadow">
+<tt class="descname">get_thing_shadow</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#IoTDataPlane.Client.get_thing_shadow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the thing shadow for the specified thing.</p>
+<p>For more information, see <a class="reference external" href="http://docs.aws.amazon.com/iot/latest/developerguide/API_GetThingShadow.html">GetThingShadow</a> in the <em>AWS IoT Developer Guide</em> .</p>
+<p><strong>Request Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_thing_shadow</span><span class="p">(</span>
+    <span class="n">thingName</span><span class="o">=</span><span class="s1">&#39;string&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<dl class="docutils field-list" frame="void" rules="none">
+<dt class="field-name">Parameters</dt><dd class="field-body"><strong>thingName</strong> (<em>string</em>) -- <p><strong>[REQUIRED]</strong></p>
+<p>The name of the thing.</p>
+</dd>
+<dt class="field-name">Return type</dt><dd class="field-body">dict</dd>
+<dt class="field-name">Returns</dt><dd class="field-body"><strong>Response Syntax</strong><div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;payload&#39;</span><span class="p">:</span> <span class="n">StreamingBody</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response Structure</strong></p>
+<ul>
+<li><em>(dict) --</em><p>The output from the GetThingShadow operation.</p>
+<ul>
+<li><strong>payload</strong> (<tt class="xref py py-class docutils literal"><span class="pre">StreamingBody</span></tt>) --<p>The state information, in JSON format.</p>
+</li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="IoTDataPlane.Client.publish">
+<tt class="descname">publish</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#IoTDataPlane.Client.publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publishes state information.</p>
+<p>For more information, see <a class="reference external" href="http://docs.aws.amazon.com/iot/latest/developerguide/protocols.html#http">HTTP Protocol</a> in the <em>AWS IoT Developer Guide</em> .</p>
+<p><strong>Request Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
+    <span class="n">topic</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">b</span><span class="s1">&#39;bytes&#39;</span><span class="o">|</span><span class="nb">file</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<dl class="docutils field-list" frame="void" rules="none">
+<dt class="field-name">Parameters</dt><dd class="field-body"><ul class="first simple">
+<li><strong>topic</strong> (<em>string</em>) -- <p><strong>[REQUIRED]</strong></p>
+<p>The name of the MQTT topic.</p>
+</li>
+<li><strong>payload</strong> (<em>bytes or seekable file-like object</em>) -- The state information, in JSON or binary format.</li>
+</ul>
+</dd>
+<dt class="field-name">Returns</dt><dd class="field-body"><p class="first last">None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="IoTDataPlane.Client.update_thing_shadow">
+<tt class="descname">update_thing_shadow</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#IoTDataPlane.Client.update_thing_shadow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the thing shadow for the specified thing.</p>
+<p>For more information, see <a class="reference external" href="http://docs.aws.amazon.com/iot/latest/developerguide/API_UpdateThingShadow.html">UpdateThingShadow</a> in the <em>AWS IoT Developer Guide</em> .</p>
+<p><strong>Request Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">update_thing_shadow</span><span class="p">(</span>
+    <span class="n">thingName</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">b</span><span class="s1">&#39;bytes&#39;</span><span class="o">|</span><span class="nb">file</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<dl class="docutils field-list" frame="void" rules="none">
+<dt class="field-name">Parameters</dt><dd class="field-body"><ul class="first simple">
+<li><strong>thingName</strong> (<em>string</em>) -- <p><strong>[REQUIRED]</strong></p>
+<p>The name of the thing.</p>
+</li>
+<li><strong>payload</strong> (<em>bytes or seekable file-like object</em>) -- <p><strong>[REQUIRED]</strong></p>
+<p>The state information, in JSON format.</p>
+</li>
+</ul>
+</dd>
+<dt class="field-name">Return type</dt><dd class="field-body"><p class="first">dict</p>
+</dd>
+<dt class="field-name">Returns</dt><dd class="field-body"><p class="first last"><p><strong>Response Syntax</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;payload&#39;</span><span class="p">:</span> <span class="n">StreamingBody</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response Structure</strong></p>
+<ul>
+<li><p class="first"><em>(dict) --</em></p>
+<p>The output from the UpdateThingShadow operation.</p>
+<ul>
+<li><p class="first"><strong>payload</strong> (<tt class="xref py py-class docutils literal"><span class="pre">StreamingBody</span></tt>) --</p>
+<p>The state information, in JSON format.</p>
+</li>
+</ul>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+            
+  <div class="footer-relations">
+    </div>
+    <div class="clearer"></div>
+  
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kinesis.html" title="Kinesis"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="iot.html" title="IoT"
+             >previous</a> |</li>
+        <li><a href="../../index.html">Boto 3 Docs 1.4.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Available Services</a> &raquo;</li> 
+      </ul>
+    </div>
+
+<script type="text/javascript">
+  $("#mobile-toggle a").click(function () {
+    $("#left-column").toggle();
+  });
+</script>
+<script type="text/javascript" src="../../_static/js/bootstrap.js"></script>
+  <div class="footer">
+    &copy; Copyright 2018, Amazon.com, Inc.. Created manually.
+  </div>
+<script type="text/javascript" src="https://media.amazonwebservices.com/js/sitecatalyst/s_code.min.js"></script>
+<script type="text/javascript">
+s.prop66 = 'AWS Greengrass SDK for Python';
+s.eVar66 = 'D=c66';
+s.prop65 = 'API Reference';
+s.eVar65 = 'D=c65';
+var s_code = s.t();
+if (s_code) document.write(s_code);
+</script>
+  </body>
+</html>

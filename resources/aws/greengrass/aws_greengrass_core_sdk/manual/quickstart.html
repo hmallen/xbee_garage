@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+  
+  <!-- Licensed under the Apache 2.0 License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/open-sans/stylesheet.css" />
+  <!-- Licensed under the SIL Open Font License -->
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/fonts/source-serif-pro/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="https://boto3.readthedocs.io/en/latest/_static/css/bootstrap-theme.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>Quickstart &mdash; Greengrass Docs 1.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/guzzle.css" type="text/css" />
+    <link rel="stylesheet" href="https://boto3.readthedocs.io/en/latest/_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="https://media.readthedocs.org/css/badge_only.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/underscore.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/doctools.js"></script>
+    <script type="text/javascript" src="https://media.readthedocs.org/javascript/readthedocs-doc-embed.js"></script>
+    <link rel="top" title="Greengrass Docs 1.0.0 documentation" href="index.html" />
+    
+<!-- RTD Extra Head -->
+
+<!-- 
+Always link to the latest version, as canonical.
+http://docs.readthedocs.org/en/latest/canonical.html
+-->
+<link rel="canonical" href="http://boto3.readthedocs.io/en/latest/guide/quickstart.html" />
+
+<link rel="stylesheet" href="https://media.readthedocs.org/css/readthedocs-doc-embed.css" type="text/css" />
+
+<script type="text/javascript" src="../_static/readthedocs-data.js"></script>
+
+<!-- Add page-specific data, which must exist in the page js, not global -->
+<script type="text/javascript">
+READTHEDOCS_DATA['page'] = 'guide/quickstart'
+</script>
+
+<script type="text/javascript" src="../_static/readthedocs-dynamic-include.js"></script>
+
+<!-- end RTD <extrahead> --></head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqs.html" title="A Sample Tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Boto 3 Documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Greengrass Docs 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="container-wrapper">
+
+      <div id="mobile-toggle">
+        <a href="#"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></a>
+      </div>
+  <div id="left-column">
+    <div class="sphinxsidebar"><a href="
+    index.html" class="text-logo">Greengrass Docs 1.2.0 documentation</a><div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Table Of Contents</h2>
+  </div>
+  <div class="sidebar-toc">
+    
+    
+      <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-greengrass-sdk">Using Greengrass SDK</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recommendations">Implementation Recommendations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.2.0updates">1.2.0 Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.1.0updates">1.1.0 Updates</a></li>
+
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Available Services</a></li>
+</ul>
+    
+  </div>
+</div>
+      
+    </div>
+  </div>
+        <div id="right-column">
+          
+
+          <div role="navigation" aria-label="breadcrumbs navigation">
+            <ol class="breadcrumb">
+              <li><a href="index.html">Docs</a></li>
+              
+              <li>Quickstart</li>
+            </ol>
+          </div>
+          
+<!--REGION_DISCLAIMER_DO_NOT_REMOVE-->
+          <div class="document clearer body">
+            
+  <div class="section" id="quickstart">
+<span id="guide-quickstart"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>The AWS Greengrass Core SDK is meant to be used by AWS Lambda functions running on an AWS Greengrass Core. It will enable Lambda functions to invoke other Lambda functions deployed to the Greengrass Core, publish messages to the Greengrass Core and work with the local Shadow service.</p>
+<p></p>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>The AWS Greengrass Core SDK is used by Lambda functions that are running locally on the AWS Greengrass Core therefore there is no configuration required.</p>
+</div>
+<div class="section" id="using-greengrass-sdk">
+<h2>Using AWS Greengrass Core SDK<a class="headerlink" href="#using-greengrass-sdk" title="Permalink to this headline">¶</a></h2>
+<p>To use the AWS Greengrass Core SDK, you must first import the AWS Greengrass Core SDK in your Lambda function as you would with any other external libraries.
+You then need to create a client for 'iot-data' or 'lambda'. Use 'iot-data' if you wish to publish messages to the local AWS Greengrass Core and interact with the local Shadow service. Use 'lambda' if you wish to invoke other Lambda functions deployed to the same AWS Greengrass Core.</p>
+<p>Here is an example for using the 'iot-data' client.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">greengrasssdk</span>
+
+<span class="c1"># Let&#39;s instantiate the iot-data client</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">greengrasssdk</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;iot-data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now that you have an <tt class="docutils literal"><span class="pre">iot-data</span></tt> client, you can publish requests.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
+    <span class="n">topic</span><span class="o">=</span><span class="s1">&#39;someTopic&#39;</span><span class="p">,</span>
+    <span class="n">payload</span><span class="o">=</span><span class="s1">&#39;some data&#39;.encode()</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is an example for using the 'lambda' client.</p>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">greengrasssdk</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">greengrasssdk</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;lambda&#39;</span><span class="p">)</span>
+</pre></div>
+<p>Now that you have a <tt class="docutils literal"><span class="pre">lambda</span></tt> client, you can publish requests.</p>
+
+<div class="highlight-python"><div class="highlight"><pre>
+
+<span class="c1"># Define the payload to pass to the invoked lambda function</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s1">&#39;message&#39;</span><span class="n">:</span><span class="s1">&quot;hello&quot;</span>
+<span class="p">})</span>
+
+
+<span class="c1"># Invoke the lambda function</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="n">FunctionName</span><span class="o">=</span><span class="s1">&#39;arn:aws:lambda:&lt;region&gt;:&lt;account id&gt;:function:&lt;function name>&#39;</span><span class="p">,</span>
+    <span class="n">InvocationType</span><span class="o">=</span><span class="s1">&#39;RequestResponse&#39;</span><span class="p">,</span>
+    <span class="n">Payload</span><span class="o">=</span><span class="s1">payload</span><span class="p">,</span>
+    <span class="n">Qualifier</span><span class="o">=</span><span class="s1">&#39;2&#39;</span>
+<span class="p">)</span>
+</pre></div>
+
+
+</pre></div>
+</div>
+
+
+</div>
+<div class="section" id="recommendations">
+<h2>Implementation Recommendations<a class="headerlink" href="#recommendations" title="Permalink to this headline">¶</a></h2>
+<p>If you need to store and share data across multiple Lambda functions running on the AWS Greengrass Core, you can use the local Shadow service to store the information.</p>
+</div>
+
+</div>
+
+<div class="Section" id="1.2.0updates">
+<h2>1.2.0 Updates<a class="headerlink" href="#1.2.0updates" title="Permalink to this headline">¶</a></h2>
+<p>SDK and GGC compatibility check takes place in the background.</p>
+</div>
+
+<div class="section" id="1.1.0updates">
+<h2>1.1.0 Updates<a class="headerlink" href="#1.1.0updates" title="Permalink to this headline">¶</a></h2>
+<p>Lambda only accepted payload in JSON format. With this update, Invoking or publishing binary payload to a lambda is supported.</p>
+</div>
+
+          </div>
+            
+  <div class="footer-relations">
+    
+      
+    </div>
+    <div class="clearer"></div>
+  
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sqs.html" title="A Sample Tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Boto 3 Documentation"
+             >previous</a> |</li>
+        <li><a href="../index.html">Boto 3 Docs 1.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+<script type="text/javascript">
+  $("#mobile-toggle a").click(function () {
+    $("#left-column").toggle();
+  });
+</script>
+<script type="text/javascript" src="../_static/js/bootstrap.js"></script>
+  <div class="footer">
+    &copy; Copyright 2018, Amazon.com, Inc.. Created manually.
+  </div>
+<script type="text/javascript" src="https://media.amazonwebservices.com/js/sitecatalyst/s_code.min.js"></script>
+<script type="text/javascript">
+s.prop66 = 'AWS SDK for Python (boto3)';
+s.eVar66 = 'D=c66';
+s.prop65 = 'API Reference';
+s.eVar65 = 'D=c65';
+var s_code = s.t();
+if (s_code) document.write(s_code);
+</script>
+  </body>
+</html>
