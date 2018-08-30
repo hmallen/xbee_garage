@@ -14,19 +14,19 @@ config_path = '../config/config_aws.ini'
 
 
 def on_connect(client, userdata, flags, rc):
-    print("Connection returned result: " + str(rc) )
+    logger.debug('rc: ' + str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe("#" , 1 )
+    client.subscribe('#' , 1)
 
 
 def on_message(client, userdata, msg):
-    print("topic: " + msg.topic)
-    print("payload: " + str(msg.payload))
+    logger.debug('msg.topic: ' + msg.topic)
+    print('msg.payload: ' + str(msg.payload))
 
 
 # def on_log(client, userdata, level, buf):
-    # print(msg.topic + " " + str(msg.payload))
+    # print(msg.topic + ' ' + str(msg.payload))
 
 
 if __name__ == '__main__':
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     caPath = config['certificates']['caPath']
     certPath = config['certificates']['certPath']
     keyPath = config['certificates']['keyPath']
-    
+
     mqttc = paho.Client()
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message
