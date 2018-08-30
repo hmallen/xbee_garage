@@ -35,7 +35,7 @@ if __name__ == '__main__':
     config.read(config_path)
 
     awshost = config['awsiot']['awshost']
-    awsport = config['awsiot']['awsport']
+    awsport = int(config['awsiot']['awsport'])
     clientId = config['awsiot']['clientId']
     thingName = config['awsiot']['thingName']
     caPath = config['certificates']['caPath']
