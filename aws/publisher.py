@@ -20,15 +20,15 @@ connflag = False
 def on_connect(client, userdata, flags, rc):
     global connflag
     connflag = True
-    print("Connection returned result: " + str(rc))
+    logger.debug('rc: ' + str(rc))
 
 
 def on_message(client, userdata, msg):
-    print(msg.topic + " " + str(msg.payload))
+    logger.debug(msg.topic + ' ' + str(msg.payload))
 
 
 # def on_log(client, userdata, level, buf):
-    # print(msg.topic + " " + str(msg.payload))
+    # print(msg.topic + ' ' + str(msg.payload))
 
 
 if __name__ == '__main__':
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         time.sleep(0.5)
         if connflag == True:
             tempreading = uniform(20.0, 25.0)
-            mqttc.publish("temperature", tempreading, qos=1)
-            print("msg sent: temperature " + "%.2f" % tempreading )
+            mqttc.publish('temperature', tempreading, qos=1)
+            logger.info('Published: temperature ' + "%.2f" % tempreading)
         else:
-            print("waiting for connection...")
+            logger.info('Waiting for connection...')
