@@ -1,6 +1,7 @@
 import configparser
 import logging
 import os
+from random import uniform
 import socket
 import ssl
 import time
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     while (True):
         time.sleep(0.5)
         if connflag == True:
-            tempreading = uniform(20.0,25.0)
+            tempreading = uniform(20.0, 25.0)
             mqttc.publish("temperature", tempreading, qos=1)
             print("msg sent: temperature " + "%.2f" % tempreading )
         else:
