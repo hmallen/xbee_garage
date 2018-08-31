@@ -12,7 +12,7 @@ logger.setLevel(logging.DEBUG)
 
 config_path = '../config/config.ini'
 
-config = configparser.configparser()
+config = configparser.ConfigParser()
 config.read(config_path)
 
 mongo_uri = config['mongodb']['uri']
