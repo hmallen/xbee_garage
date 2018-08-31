@@ -14,6 +14,7 @@ flask = "*"
 request = "*"
 jsonify = "*"
 marshmallow = "*"
+pymongo = "*"
 
 
 [dev-packages]
