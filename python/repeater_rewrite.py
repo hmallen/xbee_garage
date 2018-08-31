@@ -74,7 +74,7 @@ def trigger_action(target, action=None):
 
 
 def process_message(msg):
-    process_return = {'success': True, 'rebroadcast': False, 'message': None}
+    process_return = {'success': True}
 
     try:
         pass
@@ -120,6 +120,7 @@ if __name__ == '__main__':
                 if end_char == '@':
                     pass
                 elif end_char == '+':
+                    # Rebroadcast
                     pass
                 else:
                     logger.error('Invalid end character in command from controller.')
@@ -127,6 +128,7 @@ if __name__ == '__main__':
                 if end_char == '@':
                     pass
                 elif end_char == '^':
+                    # Rebroadcast
                     pass
                 else:
                     logger.error('Invalid end character in command from remote.')
