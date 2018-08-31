@@ -11,6 +11,9 @@ pyserial = "*"
 cayenne-mqtt = "*"
 awsiotpythonsdk = "*"
 flask = "*"
+request = "*"
+jsonify = "*"
+marshmallow = "*"
 
 
 [dev-packages]
