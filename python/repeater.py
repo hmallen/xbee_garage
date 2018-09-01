@@ -127,70 +127,88 @@ def update_log():
     pass
 
 
-if __name__ == '__main__':
-    # Flush serial receive buffer
+def flush_buffer():
+    logger.info('Flushing serial buffer.')
     if ser.in_waiting > 0:
-        logger.info('Flushing serial buffer.')
-
         while ser.in_waiting > 0:
             c = ser.read()
             time.sleep(0.1)
 
+
+if __name__ == '__main__':
+    # Flush serial receive buffer
+    flush_buffer()
+
     while (True):
-        if ser.in_waiting > 0:
-            cmd = ser.readline().rstrip(b'\n')
-            logger.debug('cmd: ' + str(cmd))
-            command = cmd.decode()
-            logger.debug('command: ' + command)
+        try:
+            if ser.in_waiting > 0:
+                cmd = ser.readline().rstrip(b'\n')
+                logger.debug('cmd: ' + str(cmd))
 
-            start_char = command[0]
-            logger.debug('start_char: ' + start_char)
-            end_char = command[-1]
-            logger.debug('end_char: ' + end_char)
+                try:
+                    command = cmd.decode()
+                    logger.debug('command: ' + command)
 
-            if '\n' in command:
-                logger.error('NEWLINE FOUND IN STRIPPED COMMAND! Exiting.')
-                sys.exit(1)
+                    start_char = command[0]
+                    logger.debug('start_char: ' + start_char)
+                    end_char = command[-1]
+                    logger.debug('end_char: ' + end_char)
 
-            rebroadcast = False
+                    if '\n' in command:
+                        logger.error('NEWLINE FOUND IN STRIPPED COMMAND! Exiting.')
+                        sys.exit(1)
 
-            # Message from controller
-            if start_char == '^':
-                if end_char == '@':
-                    # Message from controller --> repeater
-                    process_message(command)
-                elif end_char == '+':
-                    # Rebroadcast
-                    rebroadcast = True
-                else:
-                    logger.error('Invalid end character in command from controller.')
+                    rebroadcast = False
 
-            # Message from remote
-            elif start_char == '+':
-                if end_char == '@':
-                    # Command from remote --> repeater
-                    logger.warning('No handling implemented for command from remote --> repeater.')
-                elif end_char == '^':
-                    # Rebroadcast
-                    rebroadcast = True
-                else:
-                    logger.error('Invalid end character in command from remote.')
+                    # Message from controller
+                    if start_char == '^':
+                        if end_char == '@':
+                            # Message from controller --> repeater
+                            process_message(command)
+                        elif end_char == '+':
+                            # Rebroadcast
+                            rebroadcast = True
+                        else:
+                            logger.error('Invalid end character in command from controller.')
 
-            # Message from API
-            elif start_char == '*':
-                if end_char == '@':
-                    # Command from API --> repeater
-                    pass
-                elif end_char == '^':
-                    # Command from API --> controller
-                    pass
-                elif end_char == '+':
-                    # Command from API --> remote
-                    pass
+                    # Message from remote
+                    elif start_char == '+':
+                        if end_char == '@':
+                            # Command from remote --> repeater
+                            logger.warning('No handling implemented for command from remote --> repeater.')
+                        elif end_char == '^':
+                            # Rebroadcast
+                            rebroadcast = True
+                        else:
+                            logger.error('Invalid end character in command from remote.')
 
-            if rebroadcast is True:
-                logger.debug('Rebroadcasting: ' + str(cmd))
-                bytes_written = ser.write(cmd)
-                logger.debug('bytes_written: ' + str(bytes_written))
+                    # Message from API
+                    elif start_char == '*':
+                        if end_char == '@':
+                            # Command from API --> repeater
+                            pass
+                        elif end_char == '^':
+                            # Command from API --> controller
+                            pass
+                        elif end_char == '+':
+                            # Command from API --> remote
+                            pass
 
-        time.sleep(0.01)
+                    if rebroadcast is True:
+                        logger.debug('Rebroadcasting: ' + str(cmd))
+                        bytes_written = ser.write(cmd)
+                        logger.debug('bytes_written: ' + str(bytes_written))
+
+                except UnicodeDecodeError as e:
+                    logger.exception('UnicodeDecodeError: ' + str(e))
+
+                except Exception as e:
+                    logger.exception('Exception: ' + str(e))
+
+            time.sleep(0.01)
+
+        except KeyboardInterrupt:
+            logger.info('Exit signal received.')
+
+        finally:
+            logger.info('Exiting.')
