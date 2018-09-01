@@ -41,12 +41,11 @@ def trigger_action(target, source=None, action=None):
             action_message += '@'
         else:
             action_message += source
-
-        action_message = '>door^'
-        logger.debug('action_message: ' + action_message)
-
+        action_message += '>door^'
     else:
         logger.error('Unrecognized target in trigger_action().')
+
+    logger.debug('action_message: ' + action_message)
 
     if len(action_message) > 0:
         logger.info('Sending action trigger command.')
