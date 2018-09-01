@@ -158,7 +158,7 @@ if __name__ == '__main__':
             if start_char == '^':
                 if end_char == '@':
                     # Message from controller --> repeater
-                    process_message(cmd)
+                    process_message(command)
                 elif end_char == '+':
                     # Rebroadcast
                     rebroadcast = True
