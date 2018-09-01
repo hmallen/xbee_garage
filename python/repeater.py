@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 logger.debug('cmd_raw: ' + str(cmd_raw))
 
                 try:
-                    command = cmd.decode().rstrip('\n')
+                    command = cmd_raw.decode().rstrip('\n')
                     logger.debug('command: ' + command)
 
                     cmd = command.encode('utf-8')
