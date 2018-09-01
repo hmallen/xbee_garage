@@ -1,578 +1,400 @@
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 
-#define hallSensor 2
-#define lockoutRelay 4
+#define SERIAL_DELAY 5
+
+#define doorSensor 2
+#define lockRelayDoor 4
 #define doorRelay 5
-#define lockoutRelayButton 6
+#define lockRelayButton 6
 #define rangeTestPin 8
 #define xbeeRx 11
 #define xbeeTx 12
 #define ledPin 13
 
-// Interrupt variables
-volatile bool doorOpen;
+bool connectionStatus = false;  // Becomes true after successfully pinging repeater
 
-// Standard variables
-unsigned long heartbeatLast = 0;
-int heartbeatInterval = 30000;
+const unsigned long updateInterval = 30000;
+unsigned long updateLast = 0;
+const int sensorReadInterval = 10000;
+unsigned long sensorReadLast = 0;
 
-bool lockStateDoor = false;
-bool lockStateButton = false;
-
+// Variables that change on device
+bool doorState; bool doorStateLast; // 0 = Closed, 1 = Open
 time_t lastOpened;
 
-bool doorAlarm = false;
-bool waitingAcknowledge = false;
-unsigned long acknowledgeTime;
+// Variables that are changed remotely
+//bool doorLock; bool doorLockLast;
+//bool buttonLock; bool buttonLockLast;
+//bool doorAlarm; bool doorAlarmLast;
+bool doorLock = false; bool doorLockLast = doorLock;
+bool buttonLock = false; bool buttonLockLast = buttonLock;
+bool doorAlarm = false; bool doorAlarmLast = doorAlarm;
 
-// State Variables (for change reference)
-// - Need to update heartbeatLast and lastOpened "in-place"
-bool doorOpenLast = doorOpen;
-bool lockStateDoorLast = lockStateDoor;
-bool lockStateButtonLast = lockStateButton;
-bool doorAlarmLast = doorAlarm;
+// Variables that need to be communicated in real-time
+bool alarmTriggered = false; bool alarmTriggeredLast = alarmTriggered;
 
 SoftwareSerial XBee(xbeeRx, xbeeTx);
 
 void setup() {
-  // Outputs
-  pinMode(lockoutRelay, OUTPUT); digitalWrite(lockoutRelay, LOW);
+  pinMode(lockRelayDoor, OUTPUT); digitalWrite(lockRelayDoor, LOW);
   pinMode(doorRelay, OUTPUT); digitalWrite(doorRelay, LOW);
-  pinMode(lockoutRelayButton, OUTPUT); digitalWrite(lockoutRelayButton, LOW);
+  pinMode(lockRelayButton, OUTPUT); digitalWrite(lockRelayButton, LOW);
   pinMode(ledPin, OUTPUT); digitalWrite(ledPin, LOW);
-  // Inputs
-  pinMode(hallSensor, INPUT);
+
+  pinMode(doorSensor, INPUT);
   pinMode(rangeTestPin, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(hallSensor), doorCheck, CHANGE);
-  doorCheck();  // Read/set initial state of door
+  attachInterrupt(digitalPinToInterrupt(doorSensor), readDoorState, CHANGE);
 
-  Serial.begin(9600);
-  XBee.begin(9600);
+  Serial.begin(19200);
+  XBee.begin(19200);
 
-  flushBuffer(true);  // Flush any characters that may be in XBee receive buffer
+  // Read initial values of device-specific variables
+  readDoorState();
+  doorStateLast = doorState;
+  //readGasSensors();
+
+  Serial.print(F("Flushing buffer..."));
+  flushBuffer();
+  Serial.println(F("complete."));
+
+  delay(1000);
+
+  Serial.println(F("Pinging repeater."));
+  connectionStatus = pingRepeater();
+
+  if (connectionStatus == true) makeRequest("settings"); // Get initial values of remotely-set variables
 }
 
 void loop() {
   /*
-     See xbee_message_reference.txt for
-     details of message format, etc.
+     Command String Construction:
+     Leading Character --> Source
+     Trailing Character --> Destination
+     ^: Controller
+     @: Repeater
+     +: Remote (Currently unused/handled by repeater)
+     Purpose:
+     >: Action
+     Requests
+     #: Start/End of Requests/Responses
+     /: Request Response Type/Information Divider
+     Separators
+     %: Variable Name
+     $: Variable Value
   */
+  if (connectionStatus == false) {
+    delay(10000);
 
-  if (XBee.available()) {
-    bool bypassProcessing = false;
-    String commandString = "";
-    byte count = 0;
+    Serial.print(F("Flushing buffer..."));
+    flushBuffer();
+    Serial.println(F("complete."));
+
+    Serial.println(F("No connection established. Pinging repeater."));
+    connectionStatus = pingRepeater();
+  }
+
+  else {
+    if (XBee.available()) {
+      char c = XBee.read();
+      if (c == '@') {
+        String commandString = String(c);
+        bool validCommand = false;
+        while (XBee.available()) {
+          commandString += c;
+          if (c == '^') {
+            validCommand = true;
+            break;
+          }
+          delay(SERIAL_DELAY);
+        }
+        Serial.print(F("commandString: ")); Serial.println(commandString);
+        Serial.print(F("validCommand: ")); Serial.println(validCommand);
+        if (validCommand == true) processCommand(commandString);
+      }
+    }
+
+    else if ((millis() - sensorReadLast) > sensorReadInterval) {
+      Serial.print(F("Reading sensor data..."));
+      // READ SENSORS
+      sensorReadLast = millis();
+      Serial.println(F("complete."));
+    }
+
+    else if ((millis() - updateLast) > updateInterval) {
+      Serial.print(F("Sending data update for all variables..."));
+      sendUpdate("all");
+      updateLast = millis();
+      Serial.println(F("complete."));
+    }
+
+    else if (timeStatus() == timeNotSet) makeRequest("time");
+
+    else checkChange();
+
+    delay(100);
+  }
+}
+
+bool pingRepeater() {
+  bool connectionValid = false;
+
+  makeRequest("ping");
+  unsigned long pingStart = millis();
+  bool messageWaiting = waitReceive(10000);
+  int pingTime = millis() - pingStart;
+
+  if (messageWaiting == true) {
+    String pingMessage = "";
     while (XBee.available()) {
       char c = XBee.read();
-      if (count == 0 && c == '^') {
-        flushBuffer(true);
-        bypassProcessing = true;
-      }
-      if (c != '\n' && c != '\r') commandString += c;
-      count++;
-      delay(5);
+      pingMessage += c;
+      delay(SERIAL_DELAY);
     }
-
-    if (bypassProcessing == false) {
-      Serial.print(F("Command Received: ")); Serial.println(commandString);
-
-      if (commandString.startsWith("@") && commandString.endsWith("^")) {
-        //Serial.println(F("Processing command."));
-        processCommand(commandString);
-      }
-
-      //else if (commandString.startsWith("^") && commandString.endsWith("@")) {
-      //Serial.println(F("Command echo received from repeater. Flushing buffer."));
-      //flushBuffer(false);
-      //}
-
-      //else if (commandString.startsWith("*")) flushBuffer(false);
-
-      else {
-        sendError("Invalid command.");
-        //flushBuffer(true);
-      }
+    Serial.print(F("pingMessage: ")); Serial.println(pingMessage);
+    if (pingMessage == "@#ping#^") {
+      connectionValid = true;
+      Serial.print(F("Ping (ms): ")); Serial.println(pingTime);
     }
   }
+  else printError("Timeout", "pingRepeater()");
 
-  if (waitingAcknowledge == true && (millis() - acknowledgeTime) > 5000) {
-    sendError("Acknowledgement timeout. Remote may be out of range.");
-    acknowledgeTime = millis();
+  return connectionValid;
+}
+
+void sendUpdate(String updateType) {
+  /*
+    // Variables that change on device
+    bool doorState; bool doorStateLast; // 0 = Closed, 1 = Open
+    time_t lastOpened;
+
+    // Variables that are changed remotely
+    bool doorLock; bool doorLockLast;
+    bool buttonLock; bool buttonLockLast;
+    bool doorAlarm; bool doorAlarmLast;
+
+    // Variables that need to be communicated in real-time
+    bool alarmTriggered = false; bool alarmTriggeredLast = alarmTriggered;
+  */
+  if (updateType == "all") {
+    reportChange("doorState", doorState);
+    delay(100);
+    reportChange("doorLock", doorLock);
+    delay(100);
+    reportChange("buttonLock", buttonLock);
+    delay(100);
+    reportChange("doorAlarm", doorAlarm);
+    delay(100);
+    reportChange("alarmTriggered", alarmTriggered);
   }
+  printError("updateType", "sendUpdate()");
+}
 
-  if ((millis() - heartbeatLast) > heartbeatInterval) {
-    //XBee.println(F("^HB@"));
-    XBee.print(F("^HB@"));
-    heartbeatLast = millis();
-    XBee.print(F("&U%heartbeatLast$"));
-    XBee.print(heartbeatLast);
-    XBee.print(F("&"));
-  }
-
-  if (digitalRead(rangeTestPin) == HIGH) {
-    while (digitalRead(rangeTestPin) == HIGH) {
-      delay(5);
+void checkChange() {
+  // Check all relevant boolean variables for state change
+  if (doorState != doorStateLast) {
+    if (doorState == 1) {
+      if (timeStatus() != timeNotSet) lastOpened = now(); // Current date/time
+      if (doorAlarm == true) {
+        alarmTriggered = true;
+        reportChange("alarmTriggered", alarmTriggered);
+      }
     }
-    rangeTest();
+    else {
+      if (doorAlarm == true) {
+        alarmTriggered = false;
+        reportChange("alarmTriggered", alarmTriggered);
+      }
+    }
+    reportChange("doorState", doorState);
+    doorStateLast = doorState;
   }
+  if (doorLock != doorLockLast) {
+    toggleLock("door", doorLock);
+    reportChange("doorLock", doorLock);
+    doorLockLast = doorLock;
+  }
+  if (buttonLock != buttonLockLast) {
+    toggleLock("button", buttonLock);
+    reportChange("buttonLock", buttonLock);
+    buttonLockLast = buttonLock;
+  }
+  if (doorAlarm != doorAlarmLast) {
+    reportChange("doorAlarm", doorAlarm);
+    doorAlarmLast = doorAlarm;
+  }
+  if (alarmTriggered != alarmTriggeredLast) {
+    reportChange("alarmTriggered", alarmTriggered);
+    alarmTriggeredLast = alarmTriggered;
+  }
+}
 
-  checkUpdates(false);
+void makeRequest(String requestType) {
+  // Send settings request command to controller
+  XBee.print("^#request/" + requestType + "#@\n");
+}
+
+void reportChange(String var, bool val) {
+  String reportMessage = "^%" + var + "$" + String(val) + "@\n";
+  XBee.print(reportMessage);
 }
 
 void processCommand(String command) {
-  // Format: @{IDENTIFIER}{ACTION}^
-  char identifier = command.charAt(1);
-  Serial.print(F("Identifier: ")); Serial.println(identifier);
-  char action = command.charAt(2);
-  Serial.print(F("Action: ")); Serial.println(action);
+  char separator = command.charAt(1);
+  Serial.print(F("separator: ")); Serial.println(separator);
 
-  if (identifier == 'D') {
-    if (action == 'O') {
-      // Check if door already open, and trigger if not
-      if (doorOpen == false) triggerDoor();
-      //else XBee.println(F("Door already open."));
-      else XBee.print(F("^MGDoor already open.@"));
-    }
-    else if (action == 'C') {
-      // Check if door already closed, and trigger if not
-      if (doorOpen == true) triggerDoor();
-      //else XBee.println(F("Door already closed."));
-      else XBee.print(F("^MGDoor already closed.@"));
-    }
-    else if (action == 'L') {
-      // Lock door
-      toggleLockout("door", true);
-    }
-    else if (action == 'U') {
-      // Unlock door
-      toggleLockout("door", false);
-    }
-    else if (action == 'S') sendStatus();
-    else sendError("Invalid ACTION while processing DOOR command.");
+  // Variable Update
+  if (separator == '%') {
+    String var = command.substring((command.indexOf('%') + 1), command.indexOf('$'));
+    Serial.print(F("var: ")); Serial.println(var);
+    String val = command.substring((command.indexOf('$') + 1), command.indexOf('^'));
+    Serial.print(F("val: ")); Serial.println(val);
+    updateVariable(var, val);
   }
 
-  else if (identifier == 'B') {
-    if (action == 'L') {
-      // Lock button
-      toggleLockout("button", true);
+  else if (separator == '#') {
+    String responseType = "";
+    if (command.indexOf('/') > 0) {
+      responseType = command.substring((command.indexOf('#') + 1), command.indexOf('/'));
     }
-    else if (action == 'U') {
-      // Unlock button
-      toggleLockout("button", false);
+    else {
+      responseType = command.substring((command.indexOf('#') + 1), command.lastIndexOf('#'));
     }
-    else sendError("Invalid ACTION while processing BUTTON command.");
+    Serial.print(F("responseType: ")); Serial.println(responseType);
+
+    if (responseType == "ping") printError("Unrequested ping", "processCommand()");
+
+    else if (responseType == "time") {
+      String timeString = command.substring((command.indexOf('/') + 1), command.lastIndexOf('#'));
+      Serial.print(F("timeString: ")); Serial.println(timeString);
+
+      syncTime(timeString);
+    }
   }
 
-  else if (identifier == 'T') {
-    if (action == 'G') timeFunction("get");
-    else if (action == 'S') timeFunction("set");
-    else sendError("Invalid ACTION while processing TIME command.");
+  else if (separator == '>') {
+    String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('^'));
+    Serial.print(F("actionTarget: ")); Serial.println(actionTarget);
+
+    if (actionTarget == "door") triggerDoor();
+    else printError("Invalid actionTarget", "processCommand()");
   }
 
-  else if (identifier == 'A') {
-    if (action == 'A') {
-      // Activate door alarm if currently inactive
-      if (doorAlarm == false) doorAlarm = true;
-      else sendError("Door alarm already active.");
-    }
-    else if (action == 'D') {
-      // Deactivate door alarm if currently active
-      if (doorAlarm == true) doorAlarm = false;
-      else sendError("Door alarm already inactive.");
-    }
-    else if (action == 'K') {
-      if (waitingAcknowledge == true) waitingAcknowledge = false;
-      else sendError("Unexpected acknowledgement received. An error may have occurred.");
-    }
-    else sendError("Invalid ACTION while processing ALARM command.");
-  }
-
-  else if (identifier == 'U') {
-    if (action == 'F') {
-      checkUpdates(true);
-    }
-    else sendError("Invalid ACTION while processing UPDATE command.");
-  }
-
-  else sendError("Invalid IDENTIFIER while processing command.");
+  else printError("Invalid separator", "processCommand()");
 }
 
-void sendStatus() {
-  String statusMessage = "^MSDoor:        ";
-  if (doorOpen == true) statusMessage += "OPEN";
-  else statusMessage += "CLOSED";
-  statusMessage += "@";
-  XBee.print(statusMessage);
-
-  statusMessage = "^MSLast Opened: ";
-  if (timeNotSet == false) statusMessage += String(lastOpened);
-  else statusMessage += "Time not set.";
-  statusMessage += "@";
-  XBee.print(statusMessage);
-
-  statusMessage = "^MSDoor Lock:   ";
-  if (lockStateDoor == true) statusMessage += "ENGAGED";
-  else statusMessage += "DISENGAGED";
-  statusMessage += "@";
-  XBee.print(statusMessage);
-
-  statusMessage = "^MSButton Lock: ";
-  if (lockStateButton == true) statusMessage += "ENGAGED";
-  else statusMessage += "DISENGAGED";
-  statusMessage += "@";
-  XBee.print(statusMessage);
-
-  statusMessage = "^MSDoor Alarm:  ";
-  if (doorAlarm == true) statusMessage += "ACTIVE";
-  else statusMessage += "INACTIVE";
-  statusMessage += "@";
-  XBee.print(statusMessage);
-
-  /*
-    statusMessage += "Door State:  ";
-    if (doorOpen == true) statusMessage += "OPEN";
-    else statusMessage += "CLOSED";
-    statusMessage += "\n";
-
-    if (timeNotSet == false) {
-    statusMessage += "Last Opened: ";
-    statusMessage += String(lastOpened);
-    }
-    else statusMessage += "Time not set. No last opened time recorded.";
-    statusMessage += "\n";
-
-    statusMessage += "Door Lock:   ";
-    if (lockStateDoor == true) statusMessage += "ENGAGED";
-    else statusMessage += "DISENGAGED";
-    statusMessage += "\n";
-
-    statusMessage += "Button Lock: ";
-    if (lockStateButton == true) statusMessage += "ENGAGED";
-    else statusMessage += "DISENGAGED";
-    statusMessage += "\n";
-
-    statusMessage += "Door Alarm:  ";
-    if (doorAlarm == true) statusMessage += "ACTIVE";
-    else statusMessage += "INACTIVE";
-    statusMessage += "\n";
-
-    statusMessage += "@";
-
-    //Serial.print(statusMessage);
-    XBee.print(statusMessage);
-    XBee.flush();
-  */
+void updateVariable(String var, String val) {
+  int valConv = val.toInt();
+  if (valConv == 0 || valConv == 1) {
+    if (var == "doorLock") doorLock = valConv;
+    else if (var == "buttonLock") buttonLock = valConv;
+    else if (var == "doorAlarm") doorAlarm = valConv;
+    else printError("Invalid variable", "updateVariable()");
+  }
+  else printError("Invalid value", "updateVariable()");
 }
 
-void checkUpdates(bool sendFull) {
-  /*
-    bool doorOpenLast = doorOpen;
-    bool lockStateDoorLast = lockStateDoor;
-    bool lockStateButtonLast = lockStateButton;
-    bool doorAlarmLast = doorAlarm;
-
-    Command Format:
-    %doorOpen$true
-    1) % - Variable Name Start
-    2) Variable Name
-    3) $ - Variable Value Start
-    4) Variable Value
-  */
-  String updateString = "&U";
-  if (doorOpen != doorOpenLast || sendFull == true) {
-    updateString += "%doorOpen$" + String(doorOpen);
-    doorOpenLast = doorOpen;
-  }
-  if (lockStateDoor != lockStateDoorLast || sendFull == true) {
-    updateString += "%lockStateDoor$" + String(lockStateDoor);
-    lockStateDoorLast = lockStateDoor;
-  }
-  if (lockStateButton != lockStateButtonLast || sendFull == true) {
-    updateString += "%lockStateButton$" + String(lockStateButton);
-    lockStateButtonLast = lockStateButton;
-  }
-  if (doorAlarm != doorAlarmLast || sendFull == true) {
-    updateString += "%doorAlarm$" + String(doorAlarm);
-    doorAlarmLast = doorAlarm;
-  }
-  updateString += "&";
-
-  if (updateString.length() > 3) XBee.print(updateString);
+void readDoorState() {
+  doorState = digitalRead(doorSensor);
 }
+
+/*
+  void readGasSensors() {
+  //
+  }
+*/
 
 void triggerDoor() {
-  XBee.print(F("^MGTriggering garage door.@"));
   digitalWrite(doorRelay, HIGH);
-  delay(100);
+  delay(250);
   digitalWrite(doorRelay, LOW);
-  //XBee.print(F("complete.@"));
 }
 
-void toggleLockout(String lock, bool lockAction) {
-  if (lock == "door") {
-    if (lockAction == true) {
-      if (lockStateDoor == false) {
-        digitalWrite(lockoutRelay, HIGH);
-        lockStateDoor = true;
-        //XBee.println(F("Door locked."));
-        XBee.print(F("^MGDoor lock engaged.@"));
-      }
-      //else XBee.println(F("Door already locked."));
-      else XBee.print(F("^MGDoor lock already engaged.@"));
-    }
-    else {
-      if (lockStateDoor == true) {
-        digitalWrite(lockoutRelay, LOW);
-        lockStateDoor = false;
-        //XBee.println(F("Door unlocked."));
-        XBee.print(F("^MGDoor lock disengaged.@"));
-      }
-      //else XBee.println(F("Door already unlocked."));
-      else XBee.print(F("^MGDoor lock already disengaged.@"));
-    }
-  }
-  else if (lock == "button") {
-    if (lockAction == true) {
-      if (lockStateButton == false) {
-        digitalWrite(lockoutRelayButton, HIGH);
-        lockStateButton = true;
-        //XBee.println(F("Button locked."));
-        XBee.print(F("^MGButton lock engaged.@"));
-      }
-      //else XBee.println(F("Button already locked."));
-      else XBee.print(F("^MGButton lock already engaged.@"));
-    }
-    else {
-      if (lockStateButton == true) {
-        digitalWrite(lockoutRelayButton, LOW);
-        lockStateButton = false;
-        //XBee.println(F("Button unlocked."));
-        XBee.print(F("^MGButton lock disengaged.@"));
-      }
-      //else XBee.println(F("Button already unlocked."));
-      else XBee.print(F("^MGButton lock already disengaged.@"));
-    }
-  }
+void toggleLock(String var, bool val) {
+  if (var == "doorLock") digitalWrite(lockRelayDoor, val);
+  else if (var == "buttonLock") digitalWrite(lockRelayButton, val);
 }
 
-// Time Functions
-void timeFunction(String timeAction) {
-  if (timeAction == "get") {
-    if (timeNotSet == false) {
-      String timeMessage = "^MT";
-      timeMessage += formatDigit(hour()) + ":";
-      timeMessage += formatDigit(minute()) + ":";
-      timeMessage += formatDigit(second()) + " - ";
-      timeMessage += String(dayStr(weekday())) + " ";
-      timeMessage += String(day()) + " ";
-      timeMessage += String(monthStr(month())) + " ";
-      timeMessage += String(year());
+String datetimeCurrent(time_t dtCurrent) {
+  //time_t dtCurrent = now();
 
-      XBee.print(timeMessage);
+  String datetimeString = formatDigit(month(dtCurrent));
+  datetimeString += formatDigit(day(dtCurrent));
+  datetimeString += String(year(dtCurrent));
+  datetimeString += "-";
+  datetimeString += formatDigit(hour(dtCurrent));
+  datetimeString += formatDigit(minute(dtCurrent));
+  datetimeString += formatDigit(second(dtCurrent));
 
-      /*
-        XBee.println(F("^MT"));
-        XBee.print(hour()); XBee.print(F(":"));
-        XBee.print(formatDigit(minute())); XBee.print(F(":"));
-        XBee.print(formatDigit(second())); XBee.print(F(" "));
-        XBee.print(month()); XBee.print(F("/"));
-        XBee.print(day()); XBee.print(F("/"));
-        XBee.println(year());
-        XBee.println(F("@"));
-      */
-    }
-    else sendError("Time has not been set.");
-  }
-  else if (timeAction == "set") {
-    // Month
-    int monthInput = getInput("Input current month (1-12):");
-    if (monthInput < 1 || monthInput > 12) {
-      sendError("Invalid month input.");
-      return;
-    }
-    // Day
-    int dayInput = getInput("Input current day (1-31):");
-    if (dayInput < 1 || dayInput > 31) {
-      sendError("Invalid day input.");
-      return;
-    }
-    // Year
-    int yearInput = getInput("Input current year (ex. 2018):");
-    if (yearInput < 2018) {
-      sendError("Invalid year input.");
-      return;
-    }
-    // Hour
-    int hourInput = getInput("Input current hour (0-23):");
-    if (hourInput < 0 || hourInput > 23) {
-      sendError("Invalid hour input.");
-      return;
-    }
-    // Minute
-    int minuteInput = getInput("Input current minute (0-59):");
-    if (minuteInput < 0 || minuteInput > 59) {
-      sendError("Invalid minute input.");
-      return;
-    }
-    // Second
-    int secondInput = getInput("Input current second (0-59):");
-    if (secondInput < 0 || secondInput > 59) {
-      sendError("Invalid second input.");
-      return;
-    }
-
-    // Set date/time
-    setTime(
-      hourInput, minuteInput, secondInput,
-      dayInput, monthInput, yearInput
-    );
-
-    //XBee.println(F("Date/time set successfully."));
-    XBee.print(F("^MGDate/time set successfully.@"));
-  }
-  else sendError("Unrecognized action in timeFunction().");
+  return datetimeString;
 }
 
-String formatDigit(int digit) {
-  String digitString = "";
-  if (digit < 10 || digit == 0) {
-    digitString += "0";
-  }
-  digitString += String(digit);
-  return digitString;
-}
+void syncTime(String timeString) {
+  // "m8d31y2018H20M50S35
+  // OR
+  // "T{UNIX_TIME}"
 
-// Get serial input from user, returning converted value
-int getInput(String requestMessage) {
-  String serialInput = "";
-  //int intReturn;
+  byte monthInput = timeString.substring((timeString.indexOf('m') + 1), timeString.indexOf('d')).toInt();
+  byte dayInput = timeString.substring((timeString.indexOf('d') + 1), timeString.indexOf('y')).toInt();
+  int yearInput = timeString.substring((timeString.indexOf('y') + 1), timeString.indexOf('H')).toInt();
+  byte hourInput = timeString.substring((timeString.indexOf('H') + 1), timeString.indexOf('M')).toInt();
+  byte minuteInput = timeString.substring((timeString.indexOf('M') + 1), timeString.indexOf('S')).toInt();
+  byte secondInput = timeString.substring(timeString.indexOf('S') + 1).toInt();
 
-  String inputMessage = "^MI";
-  inputMessage += requestMessage + "\n";
-  inputMessage += "Response must start and end with the '#' symbol and contain no spaces. (ex. #12#)@";
+  Serial.print(F("Month:  ")); Serial.println(monthInput);
+  Serial.print(F("Day:    ")); Serial.println(dayInput);
+  Serial.print(F("Year:   ")); Serial.println(yearInput);
+  Serial.print(F("Hour:   ")); Serial.println(hourInput);
+  Serial.print(F("Minute: ")); Serial.println(minuteInput);
+  Serial.print(F("Second: ")); Serial.println(secondInput);
 
-  XBee.print(inputMessage);
+  setTime(hourInput, minuteInput, secondInput, dayInput, monthInput, yearInput);
 
   /*
-    XBee.println(F("^MI"));
-    XBee.println(requestMessage);
-    XBee.print(F("Response must start and end with the # symbol and contain no spaces."));
-    XBee.println(F(" (ex. #12#)"));
-    XBee.println(F("@"));
+    unsigned long unixTime = timeString.substring(timeString.indexOf('T') + 1);
+    Serial.print(F("unixTime: ")); Serial.println(unixTime);
+
+    setTime(unixTime);
   */
+}
+
+String formatDigit(byte digit) {
+  String digitFormatted = "";
+  if (digit < 10 || digit == 0) {
+    digitFormatted += "0";
+  }
+  digitFormatted += String(digit);
+  return digitFormatted;
+}
+
+bool waitReceive(int timeout) {
+  bool receiveSuccess = true;
 
   unsigned long waitStart = millis();
-  while (!XBee.available()) {
-    if ((millis() - waitStart) > 30000) {
-      sendError("Timeout while waiting for serial input.");
-      return -1;
-    }
-    delay(5);
-  }
-
-  while (XBee.available()) {
-    char c = XBee.read();
-    if (isDigit(c) == true) {
-      serialInput += c;
-    }
-    delay(5);
-  }
-
-  if (serialInput.startsWith("#") == true && serialInput.endsWith("#") == true) {
-    serialInput.remove(0, 1);
-    serialInput.remove(serialInput.indexOf('#'));
-  }
-  else {
-    sendError("Invalid input received while setting time.");
-    return -1;
-  }
-
-  return serialInput.toInt();
-}
-
-void sendAlarm(String alarmType) {
-  if (alarmType == "door") XBee.print(F("^AD@"));
-}
-
-void sendError(String errorMessage) {
-  String errorString = "^ME";
-  errorString += errorMessage;
-  errorString += "@";
-
-  XBee.print(errorString);
-
-  /*
-    XBee.println(F("^ME"));
-    //XBee.print(F("*ERROR* "));
-    XBee.println(errorMessage);
-    XBee.println(F("@"));
-  */
-}
-
-// XBee Buffer Flush Function
-void flushBuffer(bool timeout) {
-  Serial.print(F("Flushing XBee serial receive buffer..."));
-
-  int flushTimeout;
-  if (timeout == true) {
-    Serial.print(F("delaying for safety..."));
-    flushTimeout = 500;
-  }
-  else {
-    flushTimeout = 0;
-  }
-
-  for (unsigned long charLast = millis(); (millis() - charLast) < flushTimeout; ) {
-    if (XBee.available()) {
-      Serial.print(F("resetting timer..."));
-      charLast = millis();
-      while (XBee.available()) {
-        char c = XBee.read();
-        delay(5);
+  if (!XBee.available()) {
+    while (!XBee.available()) {
+      if ((millis() - waitStart) > timeout) {
+        receiveSuccess = false;
+        break;
       }
+      delay(SERIAL_DELAY);
     }
   }
-  Serial.println(F("buffer cleared."));
+  printError("Timeout", "waitReceive()");
+
+  return receiveSuccess;
 }
 
-// Interrupt Functions
-void doorCheck() {
-  doorOpen = digitalRead(hallSensor);
-
-  if (doorOpen == true) {
-    if (timeNotSet == false) lastOpened = now();
-
-    if (doorAlarm == true) {
-      sendAlarm("door");
-      acknowledgeTime = millis();
-      waitingAcknowledge = true;
+void flushBuffer() {
+  if (XBee.available()) {
+    while (XBee.available()) {
+      char c = XBee.read();
+      delay(SERIAL_DELAY);
     }
   }
 }
 
-// Auxillary Functions
-void rangeTest() {
-  //XBee.println(F("Beginning 120 second range test."));
-  XBee.print(F("^MGBeginning 120 second range test.@"));
-
-  unsigned long testStart = millis();
-  for (byte x = 0; (millis() - testStart) < 120000; x++) {
-    for (byte y = 0; y < 3; y++) {
-      delay(100);
-      digitalWrite(ledPin, HIGH);
-      delay(100);
-      digitalWrite(ledPin, LOW);
-    }
-    //XBee.print(F("RANGE TEST #")); XBee.println(x + 1);
-    String testMessage = "^MGRANGE TEST #" + String(x + 1) + "@";
-    XBee.print(testMessage);
-    delay(1000);
-  }
-
-  heartbeatLast = millis();
-
-  //XBee.println(F("Range test complete."));
-  XBee.print(F("^MGRange test complete.@"));
+void printError(String errorType, String errorFunction) {
+  Serial.println(errorType + " in " + errorFunction + ".");
 }
