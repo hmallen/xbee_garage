@@ -32,18 +32,7 @@ ser = serial.Serial(
     timeout=1
 )
 
-"""
-garage_state = {
-    'doorState': None,
-    'lastOpened': None,
-    'doorLock': None,
-    'buttonLock': None,
-    'doorAlarm': None
-}
-"""
 
-
-# Trigger actions from received MQTT messages
 def trigger_action(target, action=None):
     pass
 
@@ -52,14 +41,68 @@ def process_message(msg):
     process_success = True
 
     try:
-        pass
+        msg_content = msg[1:-1]
+        logger.debug('msg_content: ' + msg_content)
+        msg_type = msg_content[0]
+        logger.debug('msg_type: ' + msg_type)
+
+        if msg_type == '#':
+            # Request/Response
+            msg_purpose = msg_content.split('/')[0][1:]
+            logger.debug('msg_purpose: ' + msg_purpose)
+
+            if msg_purpose == 'request':
+                msg_request = msg_content.split('/')[1][:-1]
+                logger.debug('msg_request: ' + msg_request)
+
+                response_prefix = '@#'
+                response_suffix = '#^'
+                response_list = []
+
+                # Handle request from controller
+                if msg_request == 'ping':
+                    # @#ping#^
+                    logger.info('Ping requested.')
+                    response_list.append(response_prefix + 'ping' + response_suffix)
+                elif msg_request == 'settings':
+                    # Get settings from MongoDB
+                    lock_states = db[collections['state']].find_one({'_id': 'locks'})
+                    for lock in lock_states:
+                        logger.debug('lock: ' + lock)
+                        if lock != '_id':
+                            lock_response = '@%' + lock
+                            # Value construction
+                            if lock_states[lock] == True:
+                                lock_response += '$1'
+                            else:
+                                lock_response += '$0'
+                            lock_response += '^'
+                        logger.debug('lock_response: ' + lock_response)
+                        response_list.append(lock_response)
+                elif msg_request == 'time':
+                    # Construct datetime message
+                    time_message = response_prefix + 'time/'
+                    time_message += datetime.datetime.now().strftime('m%md%dy%YH%HM%MS%S')
+                    time_message += response_suffix
+                    logger.debug('time_message: ' + time_message)
+                    response_list.append(time_message)
+
+                if len(response_list) > 0:
+                    for response in response_list:
+                        logger.info('Broadcasting response: ' + response)
+                        bytes_written = ser.write(response.encode('utf-8'))
+                        logger.debug('bytes_written: ' + str(bytes_written))
+                        time.sleep(0.1)
+
+        elif msg_type == '%':
+            pass
 
     except Exception as e:
         logger.exception(e)
         process_success = False
 
     finally:
-        return process_return
+        return process_success
 
 
 def update_log():
@@ -108,7 +151,7 @@ if __name__ == '__main__':
             elif start_char == '+':
                 if end_char == '@':
                     # Command from remote --> repeater
-                    pass
+                    logger.warning('No handling implemented for command from remote --> repeater.')
                 elif end_char == '^':
                     # Rebroadcast
                     rebroadcast = True
@@ -129,6 +172,7 @@ if __name__ == '__main__':
 
             if rebroadcast is True:
                 logger.debug('Rebroadcasting: ' + str(cmd))
-                ser.write(cmd)
+                bytes_written = ser.write(cmd)
+                logger.debug('bytes_written: ' + str(bytes_written))
 
         time.sleep(0.01)
