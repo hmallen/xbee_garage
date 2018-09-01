@@ -1,12 +1,11 @@
 import configparser
-# import io
+import datetime
 import logging
-# from multiprocessing import Process
 import serial
-# import sys
+import sys
 import time
 
-import cayenne.client
+from pymongo import MongoClient
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -17,117 +16,181 @@ config_path = '../config/config.ini'
 config = configparser.ConfigParser()
 config.read(config_path)
 
+mongo_uri = config['mongodb']['uri']
+mongo_db = config['mongodb']['database']
 
-# Function for updating dashboard values via MQTT
-def mqtt_update(variable, value):
-    channel = None
-    data_type = 'null'
-    data_unit = None
+collections = {
+    'log': config['mongodb']['collection_log'],
+    'state': config['mongodb']['collection_state']
+}
 
-    if variable == 'doorOpen':
-        channel = 1
-        data_unit = 'd'
-    elif variable == 'lockStateDoor':
-        channel = 2
-        data_unit = 'd'
-    elif variable == 'lockStateButton':
-        channel = 3
-        data_unit = 'd'
-    elif variable == 'doorAlarm':
-        channel = 4
-        data_unit = 'd'
-    elif variable == 'heartbeatLast':
-        pass
+db = MongoClient(mongo_uri)[mongo_db]
 
-    logger.debug('Updating "' + variable + '" via MQTT.')
-    mqtt_client.virtualWrite(channel, value, data_type, data_unit)
+ser = serial.Serial(
+    port='/dev/ttyUSB0',
+    baudrate=19200,
+    timeout=1
+)
 
 
-# Callback for messages received from Cayenne
-def on_message(msg):
-    logger.info('msg [on_message]: ' + str(msg))
+def trigger_action(target, source=None, action=None):
+    action_message = ''
+
+    if target == 'door':
+        if source is None:
+            action_message += '@'
+        else:
+            action_message += source
+        action_message += '>door^'
+    else:
+        logger.error('Unrecognized target in trigger_action().')
+
+    logger.debug('action_message: ' + action_message)
+
+    if len(action_message) > 0:
+        logger.info('Sending action trigger command.')
+        bytes_written = ser.write(action_message.encode('utf-8'))
+        logger.debug('bytes_written: ' + str(bytes_written))
+    else:
+        logger.warning('Command not sent due to error.')
 
 
 def process_message(msg):
-    process_return = {'success': True, 'rebroadcast': False, 'message': None}
+    process_success = True
 
     try:
-        msg_decoded = msg.decode()
-        logger.debug('msg_decoded: ' + msg_decoded)
+        msg_content = msg[1:-1]
+        logger.debug('msg_content: ' + msg_content)
+        msg_type = msg_content[0]
+        logger.debug('msg_type: ' + msg_type)
 
-        start_char = msg_decoded[0]
-        logger.debug('start_char: ' + start_char)
-        end_char = msg_decoded[-1]
-        logger.debug('end_char: ' + end_char)
+        if msg_type == '#':
+            # Request/Response
+            msg_purpose = msg_content.split('/')[0][1:]
+            logger.debug('msg_purpose: ' + msg_purpose)
 
-        if start_char == '@':
-            if end_char == '^':
-                process_return['message'] = msg
-                process_return['rebroadcast'] = True
-            else:
-                logger.error('Unrecognized end character in command from remote --> controller.')
-        elif start_char == '^':
-            if end_char == '@':
-                process_return['message'] = msg
-                process_return['rebroadcast'] = True
-            else:
-                logger.error('Unrecognized end character in command from controller --> remote')
-        elif start_char == '&':
-            updates = [(var.split('$')[0], var.split('$')[1]) for var in msg_decoded[3:-1].split('%')]
-            logger.debug('updates: ' + str(updates))
+            if msg_purpose == 'request':
+                msg_request = msg_content.split('/')[1][:-1]
+                logger.debug('msg_request: ' + msg_request)
 
-            [mqtt_update(update[0], update[1]) for update in updates]
+                response_prefix = '@#'
+                response_suffix = '#^'
+                response_list = []
+
+                # Handle request from controller
+                if msg_request == 'ping':
+                    # @#ping#^
+                    logger.info('Ping requested.')
+                    response_list.append(response_prefix + 'ping' + response_suffix)
+                elif msg_request == 'settings':
+                    # Get settings from MongoDB
+                    lock_states = db[collections['state']].find_one({'_id': 'locks'})
+                    for lock in lock_states:
+                        logger.debug('lock: ' + lock)
+                        if lock != '_id':
+                            lock_response = '@%' + lock
+                            # Value construction
+                            if lock_states[lock] == True:
+                                lock_response += '$1'
+                            else:
+                                lock_response += '$0'
+                            lock_response += '^'
+                        logger.debug('lock_response: ' + lock_response)
+                        response_list.append(lock_response)
+                elif msg_request == 'time':
+                    # Construct datetime message
+                    time_message = response_prefix + 'time/'
+                    time_message += datetime.datetime.now().strftime('m%md%dy%YH%HM%MS%S')
+                    time_message += response_suffix
+                    logger.debug('time_message: ' + time_message)
+                    response_list.append(time_message)
+
+                if len(response_list) > 0:
+                    for response in response_list:
+                        logger.info('Broadcasting response: ' + response)
+                        bytes_written = ser.write(response.encode('utf-8'))
+                        logger.debug('bytes_written: ' + str(bytes_written))
+                        time.sleep(0.1)
+
+        elif msg_type == '%':
+            pass
 
     except Exception as e:
         logger.exception(e)
-        process_return['success'] = False
+        process_success = False
 
     finally:
-        return process_return
+        return process_success
+
+
+def update_log():
+    pass
 
 
 if __name__ == '__main__':
-    mqtt_username = config['mqtt']['username']
-    mqtt_password = config['mqtt']['password']
-    mqtt_client_id = config['mqtt']['client_id']
+    # Flush serial receive buffer
+    if ser.in_waiting > 0:
+        logger.info('Flushing serial buffer.')
 
-    mqtt_client = cayenne.client.CayenneMQTTClient()
-    mqtt_client.on_message = on_message
-    mqtt_client.begin(mqtt_username, mqtt_password, mqtt_client_id)
-
-    ser = serial.Serial(
-        port='/dev/ttyUSB0',
-        baudrate=9600,
-        # stimeout=0.5
-    )
-
-    new_msg = False
+        while ser.in_waiting > 0:
+            c = ser.read()
+            time.sleep(0.1)
 
     while (True):
         if ser.in_waiting > 0:
-            c = ser.read()
-            if c == b'@' or c == b'^' or c == b'&':
-                if new_msg is False:
-                    new_msg = True
-                    msg = c
-                else:
-                    msg += c
-                    process_result = process_message(msg)
-                    new_msg = False
+            cmd = ser.readline().rstrip(b'\n')
+            logger.debug('cmd: ' + str(cmd))
+            command = cmd.decode()
+            logger.debug('command: ' + command)
 
-                    if process_result['success'] is True:
-                        if process_result['rebroadcast'] is True:
-                            bytes_written = ser.write(process_result['message'])
-                            logger.debug('bytes_written: ' + str(bytes_written))
-                            time.sleep(0.05)
-                    else:
-                        logger.error('Error while processing message.')
-            elif new_msg is True:
-                msg += c
-            else:
-                logger.warning('Orphaned character(s) in serial buffer. Flushing buffer.')
-                while ser.in_waiting > 0:
-                    orph = ser.read()
-                    logger.debug('orph: ' + str(orph))
+            start_char = command[0]
+            logger.debug('start_char: ' + start_char)
+            end_char = command[-1]
+            logger.debug('end_char: ' + end_char)
+
+            if '\n' in command:
+                logger.error('NEWLINE FOUND IN STRIPPED COMMAND! Exiting.')
+                sys.exit(1)
+
+            rebroadcast = False
+
+            # Message from controller
+            if start_char == '^':
+                if end_char == '@':
+                    # Message from controller --> repeater
+                    process_message(cmd)
+                elif end_char == '+':
+                    # Rebroadcast
+                    rebroadcast = True
+                else:
+                    logger.error('Invalid end character in command from controller.')
+
+            # Message from remote
+            elif start_char == '+':
+                if end_char == '@':
+                    # Command from remote --> repeater
+                    logger.warning('No handling implemented for command from remote --> repeater.')
+                elif end_char == '^':
+                    # Rebroadcast
+                    rebroadcast = True
+                else:
+                    logger.error('Invalid end character in command from remote.')
+
+            # Message from API
+            elif start_char == '*':
+                if end_char == '@':
+                    # Command from API --> repeater
+                    pass
+                elif end_char == '^':
+                    # Command from API --> controller
+                    pass
+                elif end_char == '+':
+                    # Command from API --> remote
+                    pass
+
+            if rebroadcast is True:
+                logger.debug('Rebroadcasting: ' + str(cmd))
+                bytes_written = ser.write(cmd)
+                logger.debug('bytes_written: ' + str(bytes_written))
 
         time.sleep(0.01)
