@@ -194,6 +194,10 @@ if __name__ == '__main__':
                             # Command from API --> remote
                             pass
 
+                    elif start_char == '@':
+                        if end_char == '^':
+                            rebroadcast = True
+
                     if rebroadcast is True:
                         logger.debug('Rebroadcasting: ' + str(cmd))
                         bytes_written = ser.write(cmd)
