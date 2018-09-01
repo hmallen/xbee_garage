@@ -139,8 +139,8 @@ if __name__ == '__main__':
     # Flush serial receive buffer
     flush_buffer()
 
-    while (True):
-        try:
+    try:
+        while (True):
             if ser.in_waiting > 0:
                 cmd = ser.readline().rstrip(b'\n')
                 logger.debug('cmd: ' + str(cmd))
@@ -207,8 +207,8 @@ if __name__ == '__main__':
 
             time.sleep(0.01)
 
-        except KeyboardInterrupt:
-            logger.info('Exit signal received.')
+    except KeyboardInterrupt:
+        logger.info('Exit signal received.')
 
-        finally:
-            logger.info('Exiting.')
+    finally:
+        logger.info('Exiting.')
