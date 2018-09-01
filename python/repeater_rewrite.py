@@ -2,7 +2,7 @@ import configparser
 import datetime
 import logging
 import serial
-# import sys
+import sys
 import time
 
 from pymongo import MongoClient
@@ -32,6 +32,7 @@ ser = serial.Serial(
     timeout=1
 )
 
+"""
 garage_state = {
     'doorState': None,
     'lastOpened': None,
@@ -39,56 +40,26 @@ garage_state = {
     'buttonLock': None,
     'doorAlarm': None
 }
+"""
 
 
 # Trigger actions from received MQTT messages
 def trigger_action(target, action=None):
-    command_success = True
-
-    if target == 'door':
-        logger.debug('Constructing door ' + str(action) + ' command.')
-
-        door_command = '@D'
-        if action == 'open':
-            door_command += 'O'
-        elif action == 'close':
-            door_command += 'C'
-        elif action == None:
-            door_command += 'F'
-        else:
-            logger.error('Unrecognized action variable passed to trigger_action().')
-            command_success = False
-
-        if command_success is True:
-            door_command += '^'
-            door_command = door_command.encode('utf-8')
-            logger.debug('door_command: ' + str(door_command))
-
-            logger.info('Sending door ' + str(action) + ' command.')
-            ser.write(door_command)
-
-        else:
-            logger.error('Error while constructing command. No command sent.')
-    else:
-        logger.error('Unknown target variable passed to trigger_action().')
+    pass
 
 
 def process_message(msg):
-    process_return = {'success': True}
+    process_success = True
 
     try:
         pass
 
     except Exception as e:
         logger.exception(e)
-        process_return['success'] = False
+        process_success = False
 
     finally:
         return process_return
-
-
-def update_state(key, value):
-    garage_state[key] = value
 
 
 def update_log():
@@ -96,7 +67,7 @@ def update_log():
 
 
 if __name__ == '__main__':
-    # Flush serial receive buffer to start fresh
+    # Flush serial receive buffer
     if ser.in_waiting > 0:
         logger.info('Flushing serial buffer.')
 
@@ -116,21 +87,48 @@ if __name__ == '__main__':
             end_char = command[-1]
             logger.debug('end_char: ' + end_char)
 
+            if '\n' in command:
+                logger.error('NEWLINE FOUND IN STRIPPED COMMAND! Exiting.')
+                sys.exit(1)
+
+            rebroadcast = False
+
+            # Message from controller
             if start_char == '^':
                 if end_char == '@':
-                    pass
+                    # Message from controller --> repeater
+                    process_message(cmd)
                 elif end_char == '+':
                     # Rebroadcast
-                    pass
+                    rebroadcast = True
                 else:
                     logger.error('Invalid end character in command from controller.')
+
+            # Message from remote
             elif start_char == '+':
                 if end_char == '@':
+                    # Command from remote --> repeater
                     pass
                 elif end_char == '^':
                     # Rebroadcast
-                    pass
+                    rebroadcast = True
                 else:
                     logger.error('Invalid end character in command from remote.')
+
+            # Message from API
+            elif start_char == '*':
+                if end_char == '@':
+                    # Command from API --> repeater
+                    pass
+                elif end_char == '^':
+                    # Command from API --> controller
+                    pass
+                elif end_char == '+':
+                    # Command from API --> remote
+                    pass
+
+            if rebroadcast is True:
+                logger.debug('Rebroadcasting: ' + str(cmd))
+                ser.write(cmd)
 
         time.sleep(0.01)

@@ -89,3 +89,11 @@ def set_locks():
 @app.route('/action', methods=['POST'])
 def trigger_action():
     pass
+
+
+if __name__ == '__main__':
+    # DO SOMETHING HERE (Threading/Multiprocessing)
+    #
+
+    # Start Flask
+    app.run()
