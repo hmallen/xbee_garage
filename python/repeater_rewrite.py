@@ -33,8 +33,27 @@ ser = serial.Serial(
 )
 
 
-def trigger_action(target, action=None):
-    pass
+def trigger_action(target, source=None, action=None):
+    action_message = ''
+
+    if target == 'door':
+        if source is None:
+            action_message += '@'
+        else:
+            action_message += source
+
+        action_message = '>door^'
+        logger.debug('action_message: ' + action_message)
+
+    else:
+        logger.error('Unrecognized target in trigger_action().')
+
+    if len(action_message) > 0:
+        logger.info('Sending action trigger command.')
+        bytes_written = ser.write(action_message.encode('utf-8'))
+        logger.debug('bytes_written: ' + str(bytes_written))
+    else:
+        logger.warning('Command not sent due to error.')
 
 
 def process_message(msg):
