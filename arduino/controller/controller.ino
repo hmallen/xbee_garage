@@ -188,7 +188,7 @@ void sendUpdate(String updateType) {
     delay(100);
     reportChange("alarmTriggered", alarmTriggered);
   }
-  printError("updateType", "sendUpdate()");
+  else printError("updateType", "sendUpdate()");
 }
 
 void checkChange() {

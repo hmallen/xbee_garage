@@ -142,12 +142,14 @@ if __name__ == '__main__':
     try:
         while (True):
             if ser.in_waiting > 0:
-                cmd = ser.readline().rstrip(b'\n')
+                cmd_raw = ser.readline()
                 logger.debug('cmd: ' + str(cmd))
 
                 try:
-                    command = cmd.decode()
+                    command = cmd.decode().rstrip('\n')
                     logger.debug('command: ' + command)
+
+                    cmd = command.encode('utf-8')
 
                     start_char = command[0]
                     logger.debug('start_char: ' + start_char)
