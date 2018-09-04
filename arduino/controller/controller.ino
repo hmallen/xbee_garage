@@ -59,9 +59,6 @@ void setup() {
   flushBuffer();
   Serial.println(F("complete."));
 
-  delay(1000);
-
-  Serial.println(F("Pinging repeater."));
   connectionStatus = pingRepeater();
 
   if (connectionStatus == true) makeRequest("settings"); // Get initial values of remotely-set variables
@@ -102,6 +99,7 @@ void loop() {
         String commandString = String(c);
         bool validCommand = false;
         while (XBee.available()) {
+          c = XBee.read();
           commandString += c;
           if (c == '^') {
             validCommand = true;
@@ -139,6 +137,8 @@ void loop() {
 
 bool pingRepeater() {
   bool connectionValid = false;
+
+  Serial.println(F("Pinging repeater."));
 
   makeRequest("ping");
   unsigned long pingStart = millis();

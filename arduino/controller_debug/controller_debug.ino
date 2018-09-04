@@ -61,9 +61,8 @@ void setup() {
   flushBuffer();
   Serial.println(F("complete."));
 
-  delay(1000);
-
   connectionStatus = pingRepeater();
+  Serial.print(F("connectionStatus: ")); Serial.println(connectionStatus);
 
   if (connectionStatus == true) makeRequest("settings"); // Get initial values of remotely-set variables
 }
@@ -85,6 +84,8 @@ void loop() {
      %: Variable Name
      $: Variable Value
   */
+  delay(1000);
+
   if (connectionStatus == false) {
     delay(10000);
 
@@ -103,6 +104,7 @@ void loop() {
         String commandString = String(c);
         bool validCommand = false;
         while (XBee.available()) {
+          c = XBee.read();
           commandString += c;
           if (c == '^') {
             validCommand = true;
@@ -136,7 +138,6 @@ void loop() {
 
     else checkChange();
   }
-  delay(100);
 }
 
 bool pingRepeater() {
@@ -163,6 +164,8 @@ bool pingRepeater() {
     }
   }
   else printError("Timeout", "pingRepeater()");
+
+  pingLast = millis();
 
   return connectionValid;
 }
@@ -342,8 +345,6 @@ void syncTime(String timeString) {
   // OR
   // "T{UNIX_TIME}"
 
-  Serial.print(F("Syncing date/time with repeater..."));
-
   byte monthInput = timeString.substring((timeString.indexOf('m') + 1), timeString.indexOf('d')).toInt();
   byte dayInput = timeString.substring((timeString.indexOf('d') + 1), timeString.indexOf('y')).toInt();
   int yearInput = timeString.substring((timeString.indexOf('y') + 1), timeString.indexOf('H')).toInt();
@@ -359,11 +360,6 @@ void syncTime(String timeString) {
   Serial.print(F("Second: ")); Serial.println(secondInput);
 
   setTime(hourInput, minuteInput, secondInput, dayInput, monthInput, yearInput);
-
-  Serial.println(F("complete."));
-
-  Serial.print(F("Current Time: ")); Serial.println(now());
-
   /*
     unsigned long unixTime = timeString.substring(timeString.indexOf('T') + 1);
     Serial.print(F("unixTime: ")); Serial.println(unixTime);
