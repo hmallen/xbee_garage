@@ -95,8 +95,8 @@ def process_message(msg):
                             else:
                                 lock_response += '$0'
                             lock_response += '^'
-                        logger.debug('lock_response: ' + lock_response)
-                        response_list.append(lock_response)
+                            logger.debug('lock_response: ' + lock_response)
+                            response_list.append(lock_response)
                 elif msg_request == 'time':
                     # Construct datetime message
                     time_message = response_prefix + 'time/'
