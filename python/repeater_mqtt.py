@@ -49,6 +49,35 @@ def on_message(client, userdata, msg):
     logger.info('msg.payload: ' + str(msg.payload))
 
 
+def on_publish(client, userdata, mid):
+    logger.debug('mid: ' + str(mid))
+
+
+def publish_update(update_var, update_val):
+    publish_success = True
+
+    topic = 'OpenHAB/'
+    if 'Lock' in update_var:
+        topic += 'locks/' # + update_var.rstrip('Lock')
+    elif 'State' in update_var:
+        topic += 'sensors/' # + update_var.rstrip('State')
+    else:
+        logger.error('Unhandled variable type in publish_update().')
+        publish_success = False
+
+    if publish_success is True:
+        topic += update_var
+        logger.debug('topic: ' + topic)
+        logger.debug('update_val: ' + str(update_val))
+
+        logger.info('Publishing MQTT update.')
+
+        (rc, mid) = mqtt_client.publish(topic, str(update_val), qos=0)
+        logger.debug('rc: ' + str(rc))
+        logger.debug('mid: ' + str(mid))
+
+
+## Other Functions ##
 def trigger_action(target, source=None, action=None):
     action_message = ''
 
@@ -129,7 +158,12 @@ def process_message(msg):
                         time.sleep(0.1)
 
         elif msg_type == '%':
-            pass
+            msg_var = msg_content.lstrip('%').split('$')[0]
+            logger.debug('msg_var: ' + msg_var)
+            msg_val = msg_content.lstrip('%').split('$')[1]
+            logger.debug('msg_val: ' + msg_val)
+
+            publish_update(msg_var, msg_val)
 
     except Exception as e:
         logger.exception(e)
@@ -158,6 +192,7 @@ if __name__ == '__main__':
     mqtt_client = mqtt.Client(client_id=mqtt_client_id)
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
+    mqtt_client.on_publish = on_publish
     mqtt_client.username_pw_set(mqtt_username, password=mqtt_password)
 
     ser = serial.Serial(
