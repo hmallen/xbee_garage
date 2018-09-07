@@ -24,7 +24,7 @@ mqtt_username = config['mqtt']['username']
 mqtt_password = config['mqtt']['password']
 mqtt_client_id = config['mqtt']['client_id']
 
-mqtt_topics = ('OpenHab/#', 0)
+mqtt_topics = ('OpenHab/#', 1)
 
 """
 mqtt_topics = [
