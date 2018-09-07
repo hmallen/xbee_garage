@@ -44,7 +44,7 @@ def on_message(client, userdata, msg):
     Topics:
     Actions --> OpenHAB/action/{target}
     """
-    
+
     logger.info('msg.topic: ' + msg.topic)
     logger.info('msg.payload: ' + str(msg.payload))
 
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     try:
         # Connect to MQTT broker
-        mqtt_client.connect(mqtt_url, port=mqtt_port, mqtt_keepalive)
+        mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
         # Start threaded MQTT loop to keep incoming/outgoing MQTT updated
         mqtt_client.loop_start()
 
