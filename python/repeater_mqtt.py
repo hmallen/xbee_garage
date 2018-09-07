@@ -224,10 +224,10 @@ if __name__ == '__main__':
 
     mqtt_client = mqtt.Client(client_id=mqtt_client_id)
     mqtt_client.on_connect = on_connect
-    mqtt_client.os_subscribe = on_subscribe
+    mqtt_client.on_subscribe = on_subscribe
     mqtt_client.on_message = on_message
     mqtt_client.on_publish = on_publish
-    mqtt_client.username_pw_set(mqtt_username, password=mqtt_password)
+    mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
 
     ser = serial.Serial(
         port='/dev/ttyUSB0',
@@ -239,8 +239,6 @@ if __name__ == '__main__':
     flush_buffer()
 
     try:
-        # Connect to MQTT broker
-        mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
         # Start threaded MQTT loop to keep incoming/outgoing MQTT updated
         mqtt_client.loop_start()
 
