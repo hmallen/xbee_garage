@@ -24,7 +24,7 @@ mqtt_username = config['mqtt']['username']
 mqtt_password = config['mqtt']['password']
 mqtt_client_id = config['mqtt']['client_id']
 
-mqtt_topics = ('OpenHab/#', 1)
+mqtt_topics = ('OpenHab/#', 0)
 
 """
 mqtt_topics = [
@@ -42,9 +42,6 @@ mqtt_topics = [
 ]
 """
 
-mqtt_client = mqtt.Client(client_id=mqtt_client_id)
-mqtt_client.enable_logger()
-
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
 
@@ -55,13 +52,22 @@ collections = {
 
 
 ## MQTT Functions ##
-def on_connect(userdata, flags, rc):
+def on_connect(mqtt_client, userdata, flags, rc):
     logger.debug('Connected with result code: ' + str(rc))
     mqtt_client.subscribe('$sys/#')
     mqtt_client.subscribe(mqtt_topics)
 
-def on_subscribe(userdata, msg_id, granted_qos):
+
+def on_disconnect(mqtt_client, userdata, rc):
+    logger.debug('Disconnected with result code: ' + str(rc))
+
+
+def on_subscribe(mqtt_client, userdata, msg_id, granted_qos):
     logger.debug('Subscribed with msg_id: ' + str(msg_id))
+
+
+def on_unsubscribe(mqtt_client, userdata, msg_id):
+    logger.debug('Unsubscribed with msg_id: ' + str(msg_id))
 
 
 def on_message(userdata, msg):
@@ -226,7 +232,9 @@ if __name__ == '__main__':
     db = MongoClient(mongo_uri)[mongo_db]
 
     mqtt_client.on_connect = on_connect
+    mqtt_client.on_disconnect = on_disconnect
     mqtt_client.on_subscribe = on_subscribe
+    mqtt_client.on_unsubscribe = on_unsubscribe
     mqtt_client.on_message = on_message
     mqtt_client.on_publish = on_publish
     mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
