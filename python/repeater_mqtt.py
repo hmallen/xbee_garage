@@ -169,10 +169,11 @@ def trigger_action(target, source=None, action=None):
         action_message += 'doorAlarm'
     else:
         logger.error('Unrecognized target in trigger_action().')
+    action_message += '^'
 
     logger.debug('action_message: ' + action_message)
 
-    if len(action_message) > 2:
+    if len(action_message) > 3:
         logger.info('Sending action trigger command.')
         bytes_written = ser.write(action_message.encode('utf-8'))
         logger.debug('bytes_written: ' + str(bytes_written))
