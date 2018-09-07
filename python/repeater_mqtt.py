@@ -79,7 +79,6 @@ def publish_update(update_var, update_val):
                 update_str = 'CLOSED'
             else:
                 update_str = 'ON'
-            update_str = 'CLOSED'
         logger.debug('update_str: ' + update_str)
 
         logger.info('Publishing MQTT update.')
