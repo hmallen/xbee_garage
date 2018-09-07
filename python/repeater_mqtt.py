@@ -68,11 +68,16 @@ def publish_update(update_var, update_val):
     if publish_success is True:
         topic += update_var
         logger.debug('topic: ' + topic)
-        logger.debug('update_val: ' + str(update_val))
+
+        if update_val == 0:
+            update_str = 'CLOSED'
+        else:
+            update_str = 'OPEN'
+        logger.debug('update_str: ' + update_str)
 
         logger.info('Publishing MQTT update.')
 
-        (rc, mid) = mqtt_client.publish(topic, str(update_val), qos=0)
+        (rc, mid) = mqtt_client.publish(topic, update_str, qos=0)
         logger.debug('rc: ' + str(rc))
         logger.debug('mid: ' + str(mid))
 
