@@ -52,13 +52,16 @@ collections = {
 
 
 ## MQTT Functions ##
-def on_connect(client, userdata, flags, rc):
+def on_connect(userdata, flags, rc):
     logger.debug('Connected with result code: ' + str(rc))
     mqtt_client.subscribe('$sys/#')
     mqtt_client.subscribe(mqtt_topics)
 
+def on_subscribe(userdata, msg_id, granted_qos):
+    logger.debug('Subscribed with msg_id: ' + str(msg_id))
 
-def on_message(client, userdata, msg):
+
+def on_message(userdata, msg):
     """
     Topics:
     Actions --> OpenHAB/action/{target}
@@ -68,7 +71,7 @@ def on_message(client, userdata, msg):
     logger.info('msg.payload: ' + str(msg.payload))
 
 
-def on_publish(client, userdata, msg_id):
+def on_publish(userdata, msg_id):
     logger.debug('msg_id: ' + str(msg_id))
 
 
@@ -221,6 +224,7 @@ if __name__ == '__main__':
 
     mqtt_client = mqtt.Client(client_id=mqtt_client_id)
     mqtt_client.on_connect = on_connect
+    mqtt_client.os_subscribe = on_subscribe
     mqtt_client.on_message = on_message
     mqtt_client.on_publish = on_publish
     mqtt_client.username_pw_set(mqtt_username, password=mqtt_password)
