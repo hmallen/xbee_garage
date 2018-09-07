@@ -84,7 +84,7 @@ def publish_update(update_var, update_val):
 
         logger.info('Publishing MQTT update.')
 
-        (rc, mid) = mqtt_client.publish(topic, update_str, qos=0)
+        (rc, mid) = mqtt_client.publish(topic, update_val, qos=0)
         logger.debug('rc: ' + str(rc))
         logger.debug('mid: ' + str(mid))
 
