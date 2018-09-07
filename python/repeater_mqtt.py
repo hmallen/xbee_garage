@@ -24,7 +24,7 @@ mqtt_username = config['mqtt']['username']
 mqtt_password = config['mqtt']['password']
 mqtt_client_id = config['mqtt']['client_id']
 
-mqtt_topics = ('OpenHab/#', 0)
+# mqtt_topics = ('OpenHab/#', 0)
 
 """
 mqtt_topics = [
@@ -33,14 +33,13 @@ mqtt_topics = [
     ('OpenHAB/actions/#', 0)
 ]
 """
-"""
+
 mqtt_topics = [
     ('OpenHAB/sensors/doorState', 0),
     ('OpenHAB/locks/doorLock', 0),
     ('OpenHAB/locks/buttonLock', 0),
     ('OpenHAB/actions/doorTrigger', 0)
 ]
-"""
 
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
