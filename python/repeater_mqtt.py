@@ -74,13 +74,13 @@ def publish_update(update_var, update_val):
                 #update_str = 'OPEN'
             #else:
                 #update_str = 'OFF'
-            update_str = 'OFF'
+            update_str = 'CLOSED'
         else:
             #if 'sensors' in topic:
                 #update_str = 'CLOSED'
             #else:
                 #update_str = 'ON'
-            update_str = 'ON'
+            update_str = 'OPEN'
         logger.debug('update_str: ' + update_str)
 
         logger.info('Publishing MQTT update.')
