@@ -24,6 +24,24 @@ mqtt_username = config['mqtt']['username']
 mqtt_password = config['mqtt']['password']
 mqtt_client_id = config['mqtt']['client_id']
 
+mqtt_topics = 'OpenHab/#'
+
+"""
+mqtt_topics = [
+    ('OpenHAB/sensors/#', 0),
+    ('OpenHAB/locks/#', 0),
+    ('OpenHAB/actions/#', 0)
+]
+"""
+"""
+mqtt_topics = [
+    ('OpenHAB/sensors/doorState', 0),
+    ('OpenHAB/locks/doorLock', 0),
+    ('OpenHAB/locks/buttonLock', 0),
+    ('OpenHAB/actions/doorTrigger', 0)
+]
+"""
+
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
 
@@ -36,7 +54,8 @@ collections = {
 ## MQTT Functions ##
 def on_connect(client, userdata, flags, rc):
     logger.debug('Connected with result code: ' + str(rc))
-    client.subscribe('$sys/#')
+    mqtt_client.subscribe('$sys/#')
+    mqtt_client.subscribe(mqtt_topics)
 
 
 def on_message(client, userdata, msg):
@@ -49,8 +68,8 @@ def on_message(client, userdata, msg):
     logger.info('msg.payload: ' + str(msg.payload))
 
 
-def on_publish(client, userdata, mid):
-    logger.debug('mid: ' + str(mid))
+def on_publish(client, userdata, msg_id):
+    logger.debug('msg_id: ' + str(msg_id))
 
 
 def publish_update(update_var, update_val):
@@ -83,9 +102,9 @@ def publish_update(update_var, update_val):
 
         logger.info('Publishing MQTT update.')
 
-        (rc, mid) = mqtt_client.publish(topic, update_str, qos=0)
+        (rc, msg_id) = mqtt_client.publish(topic, update_str, qos=0)
         logger.debug('rc: ' + str(rc))
-        logger.debug('mid: ' + str(mid))
+        logger.debug('msg_id: ' + str(msg_id))
 
 
 ## Other Functions ##
@@ -219,7 +238,7 @@ if __name__ == '__main__':
         # Connect to MQTT broker
         mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
         # Start threaded MQTT loop to keep incoming/outgoing MQTT updated
-        # mqtt_client.loop_start()
+        mqtt_client.loop_start()
 
         while (True):
             if ser.in_waiting > 0:
@@ -292,11 +311,6 @@ if __name__ == '__main__':
 
                 except Exception as e:
                     logger.exception('Exception: ' + str(e))
-
-            else:
-                logger.debug('Looping MQTT client.')
-                
-                mqtt_client.loop()
 
             # time.sleep(0.01)
             time.sleep(1)
