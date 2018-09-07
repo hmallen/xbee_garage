@@ -231,6 +231,8 @@ if __name__ == '__main__':
     # Initialize clients
     db = MongoClient(mongo_uri)[mongo_db]
 
+    mqtt_client = mqtt.Client(client_id=mqtt_client_id)
+    mqtt_client.enable_logger()
     mqtt_client.on_connect = on_connect
     mqtt_client.on_disconnect = on_disconnect
     mqtt_client.on_subscribe = on_subscribe
