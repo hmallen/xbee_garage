@@ -74,7 +74,7 @@ def on_message(mqtt_client, userdata, msg):
     Topics:
     Actions --> OpenHAB/action/{target}
     """
-
+    logger.info('Received message: ' + str(msg))
     logger.info('msg.topic: ' + msg.topic)
     logger.info('msg.payload: ' + str(msg.payload))
 
