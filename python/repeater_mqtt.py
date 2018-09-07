@@ -43,6 +43,7 @@ mqtt_topics = [
 """
 
 mqtt_client = mqtt.Client(client_id=mqtt_client_id)
+mqtt_client.enable_logger()
 
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
