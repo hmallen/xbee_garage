@@ -49,6 +49,14 @@ collections = {
     'state': config['mongodb']['collection_state']
 }
 
+garage_state = {
+    'doorState': None,
+    'doorLock': None,
+    'buttonLock': None,
+    'doorAlarm': None,
+    'alarmTriggered': None
+}
+
 
 ## MQTT Functions ##
 def on_connect(mqtt_client, userdata, flags, rc):
@@ -205,7 +213,12 @@ def process_message(msg):
             msg_val = msg_content.lstrip('%').split('$')[1]
             logger.debug('msg_val: ' + msg_val)
 
-            publish_update(msg_var, msg_val)
+            if garage_state[msg_var] != msg_val:
+                logger.info('Variable changed. Updating via MQTT.')
+                publish_update(msg_var, msg_val)
+                garage_state[msg_var] = msg_val
+            else:
+                logger.debug('Variable unchanged. Skipping update.')
 
     except Exception as e:
         logger.exception(e)
