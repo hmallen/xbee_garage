@@ -35,7 +35,7 @@ mqtt_topics = [
 """
 
 mqtt_topics = [
-    ('OpenHAB/sensors/doorState', 0),
+    # ('OpenHAB/sensors/doorState', 0),
     ('OpenHAB/locks/doorLock', 0),
     ('OpenHAB/locks/buttonLock', 0),
     ('OpenHAB/actions/doorTrigger', 0)
@@ -54,7 +54,9 @@ collections = {
 def on_connect(mqtt_client, userdata, flags, rc):
     logger.debug('Connected with result code: ' + str(rc))
     mqtt_client.subscribe('$sys/#')
-    mqtt_client.subscribe(mqtt_topics)
+    #mqtt_client.subscribe(mqtt_topics)
+    for topic in mqtt_topics:
+        mqtt_client.subscribe(topic)
 
 
 def on_disconnect(mqtt_client, userdata, rc):
@@ -74,9 +76,8 @@ def on_message(mqtt_client, userdata, msg):
     Topics:
     Actions --> OpenHAB/action/{target}
     """
-    logger.info('Received message: ' + str(msg))
-    logger.info('msg.topic: ' + msg.topic)
-    logger.info('msg.payload: ' + str(msg.payload))
+    logger.debug('msg.topic: ' + msg.topic)
+    logger.debug('msg.payload: ' + str(msg.payload))
 
 
 def on_publish(mqtt_client, userdata, msg_id):
