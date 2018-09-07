@@ -104,7 +104,8 @@ def on_message(mqtt_client, userdata, msg):
         target_action = True
     logger.debug('target_action: ' + str(target_action))
 
-    #trigger_action
+    logger.info('Triggering action.')
+    trigger_action(target_var)
 
 
 def on_publish(mqtt_client, userdata, msg_id):
