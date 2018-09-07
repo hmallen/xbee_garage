@@ -219,7 +219,7 @@ if __name__ == '__main__':
         # Connect to MQTT broker
         mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
         # Start threaded MQTT loop to keep incoming/outgoing MQTT updated
-        mqtt_client.loop_start()
+        # mqtt_client.loop_start()
 
         while (True):
             if ser.in_waiting > 0:
@@ -293,7 +293,13 @@ if __name__ == '__main__':
                 except Exception as e:
                     logger.exception('Exception: ' + str(e))
 
-            time.sleep(0.01)
+            else:
+                logger.debug('Looping MQTT client.')
+                
+                mqtt_client.loop()
+
+            # time.sleep(0.01)
+            time.sleep(1)
 
     except KeyboardInterrupt:
         logger.info('Exit signal received.')
