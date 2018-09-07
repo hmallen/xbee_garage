@@ -83,9 +83,28 @@ def on_message(mqtt_client, userdata, msg):
     """
     Topics:
     Actions --> OpenHAB/action/{target}
+
+    ex. Button Lock switch toggled via OpenHAB interface
+    DEBUG:__main__:msg.topic: OpenHAB/locks/buttonLock
+    DEBUG:__main__:msg.payload: b'ON'
     """
+    logger.info('Received MQTT message.')
     logger.debug('msg.topic: ' + msg.topic)
     logger.debug('msg.payload: ' + str(msg.payload))
+
+    target_type = msg.topic.split('/')[1]
+    logger.debug('target_type: ' + target_type)
+    target_var = msg.topic.split('/')[2]
+    logger.debug('target_var: ' + target_var)
+
+    msg_action = msg.payload.decode()
+    logger.debug('msg_action: ' + msg_action)
+    target_action = False
+    if msg_action == 'ON' or msg_action == 'OPEN':
+        target_action = True
+    logger.debug('target_action: ' + str(target_action))
+
+    #trigger_action
 
 
 def on_publish(mqtt_client, userdata, msg_id):
@@ -131,18 +150,28 @@ def publish_update(update_var, update_val):
 def trigger_action(target, source=None, action=None):
     action_message = ''
 
-    if target == 'door':
-        if source is None:
-            action_message += '@'
+    if source is None:
+        action_message += '@>'
+    else:
+        if len(source) == 1:
+            action_message += source + '>'
         else:
-            action_message += source
-        action_message += '>door^'
+            logger.error('Invalid source in trigger_action().')
+
+    if target == 'doorTrigger':
+        action_message += 'door^'
+    elif target == 'doorLock':
+        action_message += 'doorLock'
+    elif target == 'buttonLock':
+        action_message += 'buttonLock'
+    elif target == 'doorAlarm':
+        action_message += 'doorAlarm'
     else:
         logger.error('Unrecognized target in trigger_action().')
 
     logger.debug('action_message: ' + action_message)
 
-    if len(action_message) > 0:
+    if len(action_message) > 2:
         logger.info('Sending action trigger command.')
         bytes_written = ser.write(action_message.encode('utf-8'))
         logger.debug('bytes_written: ' + str(bytes_written))

@@ -278,6 +278,9 @@ void processCommand(String command) {
     Serial.print(F("actionTarget: ")); Serial.println(actionTarget);
 
     if (actionTarget == "door") triggerDoor();
+    else if (actionTarget == "doorLock") toggleLock("doorLock", !doorLock);
+    else if (actionTarget == "buttonLock") toggleLock("buttonLock", !buttonLock);
+    else if (actionTarget == "doorAlarm") doorAlarm = !doorAlarm;
     else printError("Invalid actionTarget", "processCommand()");
   }
 
