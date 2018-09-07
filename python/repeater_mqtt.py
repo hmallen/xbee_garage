@@ -70,7 +70,7 @@ def on_unsubscribe(mqtt_client, userdata, msg_id):
     logger.debug('Unsubscribed with msg_id: ' + str(msg_id))
 
 
-def on_message(userdata, msg):
+def on_message(mqtt_client, userdata, msg):
     """
     Topics:
     Actions --> OpenHAB/action/{target}
@@ -80,7 +80,7 @@ def on_message(userdata, msg):
     logger.info('msg.payload: ' + str(msg.payload))
 
 
-def on_publish(userdata, msg_id):
+def on_publish(mqtt_client, userdata, msg_id):
     logger.debug('msg_id: ' + str(msg_id))
 
 
