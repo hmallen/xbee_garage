@@ -33,13 +33,22 @@ mqtt_topics = [
     ('OpenHAB/actions/#', 0)
 ]
 """
-
+"""
 mqtt_topics = [
     # ('OpenHAB/sensors/doorState', 0),
     ('OpenHAB/locks/doorLock', 0),
     ('OpenHAB/locks/buttonLock', 0),
     ('OpenHAB/actions/doorTrigger', 0)
 ]
+"""
+
+# Subscribe to actions topic to receive commands from OpenHAB
+mqtt_topics = ('OpenHAB/actions/#', 0)
+
+boolean_reference = {
+    '0': [0, '0', 'OFF', 'CLOSE', 'CLOSED'],
+    '1': [1, '1', 'ON', 'OPEN', 'OPENED']
+}
 
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
@@ -97,15 +106,15 @@ def on_message(mqtt_client, userdata, msg):
     target_var = msg.topic.split('/')[2]
     logger.debug('target_var: ' + target_var)
 
+    target_action = False
     msg_action = msg.payload.decode()
     logger.debug('msg_action: ' + msg_action)
-    target_action = False
-    if msg_action == 'ON' or msg_action == 'OPEN':
+    if msg_action in boolean_reference['1']:
         target_action = True
     logger.debug('target_action: ' + str(target_action))
 
-    logger.info('Triggering action.')
-    trigger_action(target_var)
+    logger.info('Triggering action. (' + target_var + '/' + target_action + ')')
+    trigger_action(target_var, target_action)
 
 
 def on_publish(mqtt_client, userdata, msg_id):
@@ -117,9 +126,9 @@ def publish_update(update_var, update_val):
 
     topic = 'OpenHAB/'
     if 'Lock' in update_var:
-        topic += 'locks/' # + update_var.rstrip('Lock')
+        topic += 'locks/'
     elif 'State' in update_var:
-        topic += 'sensors/' # + update_var.rstrip('State')
+        topic += 'sensors/'
     else:
         logger.error('Unhandled variable type in publish_update().')
         publish_success = False
@@ -148,30 +157,21 @@ def publish_update(update_var, update_val):
 
 
 ## Other Functions ##
-def trigger_action(target, source=None, action=None):
+def trigger_action(target, action=None, source='@'):
     action_message = ''
 
-    if source is None:
-        action_message += '@>'
-    else:
-        if len(source) == 1:
-            action_message += source + '>'
+    if action != None:
+        for boolean_key in boolean_reference:
+            if action in boolean_reference[boolean_key]:
+                action_conv = int(boolean_key)
+                break
         else:
-            logger.error('Invalid source in trigger_action().')
+            logger.error('Unrecognized action passed to trigger_action().')
+            action_conv = -1
 
-    if target == 'doorTrigger':
-        action_message += 'door^'
-    elif target == 'doorLock':
-        action_message += 'doorLock'
-    elif target == 'buttonLock':
-        action_message += 'buttonLock'
-    elif target == 'doorAlarm':
-        action_message += 'doorAlarm'
-    else:
-        logger.error('Unrecognized target in trigger_action().')
-    action_message += '^'
-
-    logger.debug('action_message: ' + action_message)
+    if action_conv >= 0:
+        action_message = source + ">" + target + "<" + action_conv + "^"
+        logger.debug('action_message: ' + action_message)
 
     if len(action_message) > 3:
         logger.info('Sending action trigger command.')

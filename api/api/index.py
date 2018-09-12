@@ -25,19 +25,6 @@ collections = {
     'log': config['mongodb']['collection_log']
 }
 
-"""
-sensors = {
-    'door': 'open',
-    'carbon-monoxide': 25,
-    'air-quality': 67
-}
-
-locks = {
-    'door': False,
-    'button': False
-}
-"""
-
 
 @app.route('/')
 def home():
@@ -46,25 +33,12 @@ def home():
 
 @app.route('/sensors')
 def list_sensors():
-    """
-    sensors = [
-        'door',
-        'carbon-monoxide',
-        'air-quality'
-    ]
-    """
     sensors = db[collections['state']].find_one({'_id': 'sensors'})
     return jsonify(sensors)
 
 
 @app.route('/locks')
 def get_locks():
-    """
-    locks = [
-        'door',
-        'button'
-    ]
-    """
     locks = db[collections['state']].find_one({'_id': 'locks'})
     return jsonify(locks)
 
