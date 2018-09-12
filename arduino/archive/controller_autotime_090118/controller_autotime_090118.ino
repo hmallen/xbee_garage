@@ -48,8 +48,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(hallSensor), doorCheck, CHANGE);
   doorCheck();  // Read/set initial state of door
 
-  Serial.begin(9600);
-  XBee.begin(9600);
+  Serial.begin(19200);
+  XBee.begin(19200);
 
   flushBuffer(true);  // Flush any characters that may be in XBee receive buffer
 

@@ -1,11 +1,12 @@
 import configparser
 import datetime
 import logging
-import serial
 import sys
 import time
 
+import paho.mqtt.client as mqtt
 from pymongo import MongoClient
+import serial
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -16,6 +17,41 @@ config_path = '../config/config.ini'
 config = configparser.ConfigParser()
 config.read(config_path)
 
+serial_baudrate = int(config['serial']['baudrate'])
+
+mqtt_url = config['mqtt']['url']
+mqtt_port = int(config['mqtt']['port'])
+mqtt_keepalive = int(config['mqtt']['keepalive'])
+mqtt_username = config['mqtt']['username']
+mqtt_password = config['mqtt']['password']
+mqtt_client_id = config['mqtt']['client_id']
+
+# mqtt_topics = ('OpenHab/#', 0)
+
+"""
+mqtt_topics = [
+    ('OpenHAB/sensors/#', 0),
+    ('OpenHAB/locks/#', 0),
+    ('OpenHAB/actions/#', 0)
+]
+"""
+"""
+mqtt_topics = [
+    # ('OpenHAB/sensors/doorState', 0),
+    ('OpenHAB/locks/doorLock', 0),
+    ('OpenHAB/locks/buttonLock', 0),
+    ('OpenHAB/actions/doorTrigger', 0)
+]
+"""
+
+# Subscribe to actions topic to receive commands from OpenHAB
+mqtt_topics = ('OpenHAB/actions/#', 0)
+
+boolean_reference = {
+    '0': [0, '0', 'OFF', 'CLOSE', 'CLOSED'],
+    '1': [1, '1', 'ON', 'OPEN', 'OPENED']
+}
+
 mongo_uri = config['mongodb']['uri']
 mongo_db = config['mongodb']['database']
 
@@ -24,30 +60,122 @@ collections = {
     'state': config['mongodb']['collection_state']
 }
 
-db = MongoClient(mongo_uri)[mongo_db]
+garage_state = {
+    'doorState': None,
+    'doorLock': None,
+    'buttonLock': None,
+    'doorAlarm': None,
+    'alarmTriggered': None
+}
 
-ser = serial.Serial(
-    port='/dev/ttyUSB0',
-    baudrate=19200,
-    timeout=1
-)
+
+## MQTT Functions ##
+def on_connect(mqtt_client, userdata, flags, rc):
+    logger.debug('Connected with result code: ' + str(rc))
+    mqtt_client.subscribe('$sys/#')
+    #mqtt_client.subscribe(mqtt_topics)
+    for topic in mqtt_topics:
+        mqtt_client.subscribe(topic)
 
 
-def trigger_action(target, source=None, action=None):
+def on_disconnect(mqtt_client, userdata, rc):
+    logger.debug('Disconnected with result code: ' + str(rc))
+
+
+def on_subscribe(mqtt_client, userdata, msg_id, granted_qos):
+    logger.debug('Subscribed with msg_id: ' + str(msg_id))
+
+
+def on_unsubscribe(mqtt_client, userdata, msg_id):
+    logger.debug('Unsubscribed with msg_id: ' + str(msg_id))
+
+
+def on_message(mqtt_client, userdata, msg):
+    """
+    Topics:
+    Actions --> OpenHAB/action/{target}
+
+    ex. Button Lock switch toggled via OpenHAB interface
+    DEBUG:__main__:msg.topic: OpenHAB/locks/buttonLock
+    DEBUG:__main__:msg.payload: b'ON'
+    """
+    logger.info('Received MQTT message.')
+    logger.debug('msg.topic: ' + msg.topic)
+    logger.debug('msg.payload: ' + str(msg.payload))
+
+    target_type = msg.topic.split('/')[1]
+    logger.debug('target_type: ' + target_type)
+    target_var = msg.topic.split('/')[2]
+    logger.debug('target_var: ' + target_var)
+
+    target_action = False
+    msg_action = msg.payload.decode()
+    logger.debug('msg_action: ' + msg_action)
+    if msg_action in boolean_reference['1']:
+        target_action = True
+    logger.debug('target_action: ' + str(target_action))
+
+    logger.info('Triggering action. (' + target_var + '/' + target_action + ')')
+    trigger_action(target_var, target_action)
+
+
+def on_publish(mqtt_client, userdata, msg_id):
+    logger.debug('msg_id: ' + str(msg_id))
+
+
+def publish_update(update_var, update_val):
+    publish_success = True
+
+    topic = 'OpenHAB/'
+    if 'Lock' in update_var:
+        topic += 'locks/'
+    elif 'State' in update_var:
+        topic += 'sensors/'
+    else:
+        logger.error('Unhandled variable type in publish_update().')
+        publish_success = False
+
+    if publish_success is True:
+        topic += update_var
+        logger.debug('topic: ' + topic)
+
+        if update_val == 0:
+            if 'sensors' in topic:
+                update_str = 'OPEN'
+            else:
+                update_str = 'ON'
+        else:
+            if 'sensors' in topic:
+                update_str = 'CLOSED'
+            else:
+                update_str = 'OFF'
+        logger.debug('update_str: ' + update_str)
+
+        logger.info('Publishing MQTT update.')
+
+        (rc, msg_id) = mqtt_client.publish(topic, update_str, qos=0)
+        logger.debug('rc: ' + str(rc))
+        logger.debug('msg_id: ' + str(msg_id))
+
+
+## Other Functions ##
+def trigger_action(target, action=None, source='@'):
     action_message = ''
 
-    if target == 'door':
-        if source is None:
-            action_message += '@'
+    if action != None:
+        for boolean_key in boolean_reference:
+            if action in boolean_reference[boolean_key]:
+                action_conv = int(boolean_key)
+                break
         else:
-            action_message += source
-        action_message += '>door^'
-    else:
-        logger.error('Unrecognized target in trigger_action().')
+            logger.error('Unrecognized action passed to trigger_action().')
+            action_conv = -1
 
-    logger.debug('action_message: ' + action_message)
+    if action_conv >= 0:
+        action_message = source + ">" + target + "<" + action_conv + "^"
+        logger.debug('action_message: ' + action_message)
 
-    if len(action_message) > 0:
+    if len(action_message) > 3:
         logger.info('Sending action trigger command.')
         bytes_written = ser.write(action_message.encode('utf-8'))
         logger.debug('bytes_written: ' + str(bytes_written))
@@ -113,7 +241,17 @@ def process_message(msg):
                         time.sleep(0.1)
 
         elif msg_type == '%':
-            pass
+            msg_var = msg_content.lstrip('%').split('$')[0]
+            logger.debug('msg_var: ' + msg_var)
+            msg_val = msg_content.lstrip('%').split('$')[1]
+            logger.debug('msg_val: ' + msg_val)
+
+            if garage_state[msg_var] != msg_val:
+                logger.info('Variable changed. Updating via MQTT.')
+                publish_update(msg_var, msg_val)
+                garage_state[msg_var] = msg_val
+            else:
+                logger.debug('Variable unchanged. Skipping update.')
 
     except Exception as e:
         logger.exception(e)
@@ -136,26 +274,48 @@ def flush_buffer():
 
 
 if __name__ == '__main__':
+    # Initialize clients
+    db = MongoClient(mongo_uri)[mongo_db]
+
+    mqtt_client = mqtt.Client(client_id=mqtt_client_id)
+    mqtt_client.enable_logger()
+    mqtt_client.on_connect = on_connect
+    mqtt_client.on_disconnect = on_disconnect
+    mqtt_client.on_subscribe = on_subscribe
+    mqtt_client.on_unsubscribe = on_unsubscribe
+    mqtt_client.on_message = on_message
+    mqtt_client.on_publish = on_publish
+    mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
+
+    ser = serial.Serial(
+        port='/dev/ttyUSB0',
+        baudrate=serial_baudrate,
+        timeout=1
+    )
+
     # Flush serial receive buffer
     flush_buffer()
 
     try:
+        # Start threaded MQTT loop to keep incoming/outgoing MQTT updated
+        mqtt_client.loop_start()
+
         while (True):
             if ser.in_waiting > 0:
                 cmd_raw = ser.readline()
-                logger.debug('cmd_raw: ' + str(cmd_raw))
+                # logger.debug('cmd_raw: ' + str(cmd_raw))
 
                 try:
                     command = cmd_raw.decode().rstrip('\n')
-                    logger.debug('command: ' + command)
+                    # logger.debug('command: ' + command)
 
                     cmd = command.encode('utf-8')
-                    logger.debug('cmd: ' + str(cmd))
+                    # logger.debug('cmd: ' + str(cmd))
 
                     start_char = command[0]
-                    logger.debug('start_char: ' + start_char)
+                    # logger.debug('start_char: ' + start_char)
                     end_char = command[-1]
-                    logger.debug('end_char: ' + end_char)
+                    # logger.debug('end_char: ' + end_char)
 
                     if '\n' in command:
                         logger.error('NEWLINE FOUND IN STRIPPED COMMAND! Exiting.')
@@ -212,10 +372,17 @@ if __name__ == '__main__':
                 except Exception as e:
                     logger.exception('Exception: ' + str(e))
 
-            time.sleep(0.01)
+            # time.sleep(0.01)
+            time.sleep(1)
 
     except KeyboardInterrupt:
         logger.info('Exit signal received.')
+
+        logger.info('Stopping threaded MQTT loop.')
+        mqtt_client.loop_stop()
+
+        logger.info('Disconnecting from MQTT broker.')
+        mqtt_client.disconnect()
 
     finally:
         logger.info('Exiting.')

@@ -23,8 +23,8 @@ void setup() {
 
   pinMode(alarmButton, INPUT_PULLUP);
 
-  Serial.begin(9600);
-  XBee.begin(9600);
+  Serial.begin(19200);
+  XBee.begin(19200);
 
   flushBuffer(true);  // Flush any characters that may be in XBee receive buffer
 

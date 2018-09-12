@@ -1,22 +1,27 @@
+#include <EEPROM.h>
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 
 #define SERIAL_DELAY 5
 
-#define carbonMonoxideSensor A1
-#define airQualitySensor A2
 #define doorSensor 2
 #define lockRelayDoor 4
 #define doorRelay 5
 #define lockRelayButton 6
-#define lightRelay 7
 #define rangeTestPin 8
 #define xbeeRx 11
 #define xbeeTx 12
 #define ledPin 13
 
+#define eepromValidBit 50
+#define eepromValidBitCount 5
+#define eepromDoorLock 55
+#define eepromButtonLock 56
+#define eepromDoorAlarm 57
+
+bool eepromLoaded = false;  // Becomes true once first set of valid values are saved into or loaded from EEPROM
+
 bool connectionStatus = false;  // Becomes true after successfully pinging repeater
-bool checkRequired = false; // Becomes true when variable updated locally to allow remote update before proceeding
 
 const unsigned long updateInterval = 30000;
 unsigned long updateLast = 0;
@@ -28,9 +33,6 @@ bool doorState; bool doorStateLast; // 0 = Closed, 1 = Open
 time_t lastOpened;
 
 // Variables that are changed remotely
-//bool doorLock; bool doorLockLast;
-//bool buttonLock; bool buttonLockLast;
-//bool doorAlarm; bool doorAlarmLast;
 bool doorLock = false; bool doorLockLast = doorLock;
 bool buttonLock = false; bool buttonLockLast = buttonLock;
 bool doorAlarm = false; bool doorAlarmLast = doorAlarm;
@@ -39,6 +41,47 @@ bool doorAlarm = false; bool doorAlarmLast = doorAlarm;
 bool alarmTriggered = false; bool alarmTriggeredLast = alarmTriggered;
 
 SoftwareSerial XBee(xbeeRx, xbeeTx);
+
+void eepromAction(String action, String target = "") {
+  if (action == "startup") {
+    byte validBits = 0;
+    for (byte x = eepromValidBit; x < (eepromValidBit + eepromValidBitCount); x++) {
+      if (EEPROM.read(x) == true) validBits++;
+    }
+    Serial.print(F("Valid Bits: ")); Serial.println(validBits);
+    Serial.print(F("Required Bits: ")); Serial.println(eepromValidBitCount);
+    if (validBits == eepromValidBitCount) {
+      eepromLoaded = true;
+    }
+  }
+
+  else if (action == "validate") {
+    Serial.print(F("Setting valid bits in EEPROM..."));
+    for (byte x = eepromValidBit; x < (eepromValidBit + eepromValidBitCount); x++) {
+      EEPROM.update(x, true);
+    }
+    Serial.println(F("complete."));
+  }
+
+  else if (action == "update") {
+    if (target == "doorLock") EEPROM.update(eepromDoorLock, doorLock);
+    else if (target == "buttonLock") EEPROM.update(eepromButtonLock, buttonLock);
+    else if (target == "doorAlarm") EEPROM.update(eepromDoorAlarm, doorAlarm);
+    else printError("Unrecognized update target", "eepromAction()");
+  }
+
+  else if (action == "read") {
+    if (eepromLoaded == true) {
+      if (target == "doorLock") doorLock = EEPROM.read(eepromDoorLock);
+      else if (target == "buttonLock") buttonLock = EEPROM.read(eepromButtonLock);
+      else if (target == "doorAlarm") doorAlarm = EEPROM.read(eepromDoorAlarm);
+      else printError("Unrecognized read target", "eepromAction()");
+    }
+    else printError("Attempted to load invalid EEPROM values", "eepromAction()");
+  }
+
+  else printError("Unrecognized action", "eepromAction()");
+}
 
 void setup() {
   pinMode(lockRelayDoor, OUTPUT); digitalWrite(lockRelayDoor, LOW);
@@ -54,6 +97,24 @@ void setup() {
   Serial.begin(19200);
   XBee.begin(19200);
 
+  // Read initial boolean values from EEPROM, or flag for required update if necessary
+  eepromAction("startup");
+  if (eepromLoaded == true) {
+    Serial.print(F("Loading valid boolean values from EEPROM..."));
+    eepromAction("read", "doorLock");
+    eepromAction("read", "buttonLock");
+    eepromAction("read", "doorAlarm");
+  }
+  else {
+    Serial.print(F("Updating EEPROM values..."));
+    eepromAction("update", "doorLock");
+    eepromAction("update", "buttonLock");
+    eepromAction("update", "doorAlarm");
+    Serial.print(F("setting validation bits..."));
+    eepromAction("validate");
+  }
+  Serial.println(F("complete."));
+
   // Read initial values of device-specific variables
   readDoorState();
   doorStateLast = doorState;
@@ -65,10 +126,7 @@ void setup() {
 
   connectionStatus = pingRepeater();
 
-  if (connectionStatus == true) {
-    makeRequest("settings"); // Get initial values of remotely-set variables
-    waitReceive(10000);
-  }
+  if (connectionStatus == true) makeRequest("settings"); // Get initial values of remotely-set variables
 }
 
 void loop() {
@@ -100,52 +158,46 @@ void loop() {
   }
 
   else {
-    if (checkRequired == false) {
-      if (XBee.available()) {
-        char c = XBee.read();
-        if (c == '@') {
-          String commandString = String(c);
-          bool validCommand = false;
-          while (XBee.available()) {
-            c = XBee.read();
-            commandString += c;
-            if (c == '^') {
-              validCommand = true;
-              break;
-            }
-            delay(SERIAL_DELAY);
+    if (XBee.available()) {
+      char c = XBee.read();
+      if (c == '@') {
+        String commandString = String(c);
+        bool validCommand = false;
+        while (XBee.available()) {
+          c = XBee.read();
+          commandString += c;
+          if (c == '^') {
+            validCommand = true;
+            break;
           }
-          Serial.print(F("commandString: ")); Serial.println(commandString);
-          Serial.print(F("validCommand: ")); Serial.println(validCommand);
-          if (validCommand == true) processCommand(commandString);
+          delay(SERIAL_DELAY);
         }
+        Serial.print(F("commandString: ")); Serial.println(commandString);
+        Serial.print(F("validCommand: ")); Serial.println(validCommand);
+        if (validCommand == true) processCommand(commandString);
       }
-
-      else if ((millis() - sensorReadLast) > sensorReadInterval) {
-        Serial.print(F("Reading sensor data..."));
-        // READ SENSORS
-        sensorReadLast = millis();
-        Serial.println(F("complete."));
-      }
-
-      else if ((millis() - updateLast) > updateInterval) {
-        Serial.print(F("Sending data update for all variables..."));
-        sendUpdate("all");
-        updateLast = millis();
-        Serial.println(F("complete."));
-      }
-
-      else if (timeStatus() == timeNotSet) {
-        makeRequest("time");
-        bool messageWaiting = waitReceive(10000);
-      }
-
-      //else checkChange();
     }
-  }
 
-  checkChange();  // Check for local variable changes and update OpenHAB if necessary
-  delay(100);
+    else if ((millis() - sensorReadLast) > sensorReadInterval) {
+      Serial.print(F("Reading sensor data..."));
+      // READ SENSORS
+      sensorReadLast = millis();
+      Serial.println(F("complete."));
+    }
+
+    else if ((millis() - updateLast) > updateInterval) {
+      Serial.print(F("Sending data update for all variables..."));
+      sendUpdate("all");
+      updateLast = millis();
+      Serial.println(F("complete."));
+    }
+
+    else if (timeStatus() == timeNotSet) makeRequest("time");
+
+    else checkChange();
+
+    delay(1000);
+  }
 }
 
 bool pingRepeater() {
@@ -156,7 +208,7 @@ bool pingRepeater() {
   makeRequest("ping");
   unsigned long pingStart = millis();
   bool messageWaiting = waitReceive(10000);
-  int pingDuration = millis() - pingStart;
+  int pingTime = millis() - pingStart;
 
   if (messageWaiting == true) {
     String pingMessage = "";
@@ -168,7 +220,7 @@ bool pingRepeater() {
     Serial.print(F("pingMessage: ")); Serial.println(pingMessage);
     if (pingMessage == "@#ping#^") {
       connectionValid = true;
-      Serial.print(F("Ping (ms): ")); Serial.println(pingDuration);
+      Serial.print(F("Ping (ms): ")); Serial.println(pingTime);
     }
   }
   else printError("Timeout", "pingRepeater()");
@@ -191,59 +243,59 @@ void sendUpdate(String updateType) {
     bool alarmTriggered = false; bool alarmTriggeredLast = alarmTriggered;
   */
   if (updateType == "all") {
-    reportChange("doorState", doorState);
+    reportChange("doorState", String(doorState));
     delay(100);
-    reportChange("doorLock", doorLock);
+    reportChange("doorLock", String(doorLock));
     delay(100);
-    reportChange("buttonLock", buttonLock);
+    reportChange("buttonLock", String(buttonLock));
     delay(100);
-    reportChange("doorAlarm", doorAlarm);
+    reportChange("doorAlarm", String(doorAlarm));
     delay(100);
-    reportChange("alarmTriggered", alarmTriggered);
+    reportChange("alarmTriggered", String(alarmTriggered));
   }
-  else printError("updateType", "sendUpdate()");
+  else printError("Invalid updateType", "sendUpdate()");
 }
 
 void checkChange() {
   // Check all relevant boolean variables for state change
   if (doorState != doorStateLast) {
     if (doorState == 1) {
-      if (timeStatus() != timeNotSet) lastOpened = now(); // Current date/time
+      if (timeStatus() != timeNotSet) {
+        lastOpened = now(); // Current date/time
+        reportChange("lastOpened", String(lastOpened));
+      }
       if (doorAlarm == true) {
         alarmTriggered = true;
-        reportChange("alarmTriggered", alarmTriggered);
+        reportChange("alarmTriggered", String(alarmTriggered));
       }
     }
     else {
       if (doorAlarm == true) {
         alarmTriggered = false;
-        reportChange("alarmTriggered", alarmTriggered);
+        reportChange("alarmTriggered", String(alarmTriggered));
       }
     }
-    reportChange("doorState", doorState);
+    reportChange("doorState", String(doorState));
     doorStateLast = doorState;
   }
   if (doorLock != doorLockLast) {
-    //toggleLock("door", doorLock);
-    triggerAction("doorLock", doorLock)
-    reportChange("doorLock", doorLock);
+    toggleLock("door", doorLock);
+    reportChange("doorLock", String(doorLock));
     doorLockLast = doorLock;
   }
   if (buttonLock != buttonLockLast) {
     toggleLock("button", buttonLock);
-    reportChange("buttonLock", buttonLock);
+    reportChange("buttonLock", String(buttonLock));
     buttonLockLast = buttonLock;
   }
   if (doorAlarm != doorAlarmLast) {
-    reportChange("doorAlarm", doorAlarm);
+    reportChange("doorAlarm", String(doorAlarm));
     doorAlarmLast = doorAlarm;
   }
   if (alarmTriggered != alarmTriggeredLast) {
-    reportChange("alarmTriggered", alarmTriggered);
+    reportChange("alarmTriggered", String(alarmTriggered));
     alarmTriggeredLast = alarmTriggered;
   }
-
-  if (checkRequired == true) checkRequired = false;
 }
 
 void makeRequest(String requestType) {
@@ -251,9 +303,11 @@ void makeRequest(String requestType) {
   XBee.print("^#request/" + requestType + "#@\n");
 }
 
-void reportChange(String var, bool val) {
+void reportChange(String var, String val) {
   String reportMessage = "^%" + var + "$" + String(val) + "@\n";
   XBee.print(reportMessage);
+
+  if (var == "doorLock" || var == "buttonLock" || var == "doorAlarm") eepromAction("update", var);
 }
 
 void processCommand(String command) {
@@ -290,20 +344,22 @@ void processCommand(String command) {
   }
 
   else if (separator == '>') {
-    //String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('^'));
-    String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('<'));
+    String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('^'));
     Serial.print(F("actionTarget: ")); Serial.println(actionTarget);
-    String actionCommand = command.substring((command.indexOf('<') + 1), command.indexOf('^'));
-    Serial.print(F("actionCommand: ")); Serial.println(actionCommand)
 
-    if (actionTarget.length() > 0 && actionCommand.length() > 0) {
-      if (actionTarget == "door") triggerAction(actionTarget, actionInt);
-      else if (actionTarget == "doorLock" || actionTarget == "buttonLock" || actionTarget == "doorAlarm") {
-        updateVariable(actionTarget, actionCommand);
-      }
-      else printError("Invalid actionTarget", "processCommand()");
+    bool toggleVal = false;
+
+    if (actionTarget == "door") triggerDoor();
+    else if (actionTarget == "doorLock") {
+      if (doorLock == false) toggleVal = true;
+      toggleLock("doorLock", toggleVal);
     }
-    else printError("Error parsing action target/command", "processCommand()");
+    else if (actionTarget == "buttonLock") {
+      if (buttonLock == false) toggleVal = true;
+      toggleLock("buttonLock", toggleVal);
+    }
+    else if (actionTarget == "doorAlarm") doorAlarm = !doorAlarm;
+    else printError("Invalid actionTarget", "processCommand()");
   }
 
   else printError("Invalid separator", "processCommand()");
@@ -330,31 +386,24 @@ void readDoorState() {
   }
 */
 
-void triggerAction(String target, bool action = -1) {
-  if (target == "door") {
-    digitalWrite(doorRelay, HIGH);
-    delay(250);
-    digitalWrite(doorRelay, LOW);
-  }
-
-  else if (action == -1) printError("Action boolean not provided", "triggerAction()");
-
-  else {
-    else if (target == "doorLock") {
-      //
-    }
-    else if (target == "buttonLock") {
-      //
-    }
-    else if (target == "doorAlarm") {
-      //
-    }
-  }
+void triggerDoor() {
+  digitalWrite(doorRelay, HIGH);
+  delay(250);
+  digitalWrite(doorRelay, LOW);
 }
 
 void toggleLock(String var, bool val) {
-  if (var == "doorLock") digitalWrite(lockRelayDoor, val);
-  else if (var == "buttonLock") digitalWrite(lockRelayButton, val);
+  Serial.print(F("var: ")); Serial.println(var);
+  Serial.print(F("val: ")); Serial.println(val);
+
+  if (var == "doorLock") {
+    digitalWrite(lockRelayDoor, val);
+    doorLock = val;
+  }
+  else if (var == "buttonLock") {
+    digitalWrite(lockRelayButton, val);
+    buttonLock = val;
+  }
 }
 
 String datetimeCurrent(time_t dtCurrent) {
@@ -422,8 +471,7 @@ bool waitReceive(int timeout) {
       delay(SERIAL_DELAY);
     }
   }
-
-  if (receiveSuccess == false) printError("Timeout", "waitReceive()");
+  printError("Timeout", "waitReceive()");
 
   return receiveSuccess;
 }

@@ -1,6 +1,6 @@
 import logging
 import serial
-import sys
+# import sys
 import time
 
 logging.basicConfig()
@@ -9,8 +9,8 @@ logger.setLevel(logging.DEBUG)
 
 ser = serial.Serial(
     port='/dev/ttyUSB0',
-    baudrate=9600#,
-    #timeout=1
+    baudrate=19200,
+    timeout=1
 )
 
 
@@ -19,12 +19,12 @@ if __name__ == '__main__':
         if ser.in_waiting > 0:
             # Receive, decode, and strip trailing \r\n from incoming message
             msg = ser.readline()
+            logger.debug('msg: ' + str(msg))
 
-            msg_decoded = msg.decode().rstrip('\r\n')
+            msg_stripped = msg.rstrip(b'\n')
+            logger.debug('msg_stripped: ' + str(msg_stripped))
+
+            msg_decoded = msg_stripped.decode()
             logger.debug('msg_decoded: ' + msg_decoded)
-
-            # Rebroadcast message for remote units (repeater function)
-            logger.debug('Rebroadcasting received message.')
-            ser.write(msg)
 
         time.sleep(0.01)
