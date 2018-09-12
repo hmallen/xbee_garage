@@ -17,6 +17,8 @@ config_path = '../config/config.ini'
 config = configparser.ConfigParser()
 config.read(config_path)
 
+serial_baudrate = int(config['serial']['baudrate'])
+
 mqtt_url = config['mqtt']['url']
 mqtt_port = int(config['mqtt']['port'])
 mqtt_keepalive = int(config['mqtt']['keepalive'])
@@ -287,7 +289,7 @@ if __name__ == '__main__':
 
     ser = serial.Serial(
         port='/dev/ttyUSB0',
-        baudrate=19200,
+        baudrate=serial_baudrate,
         timeout=1
     )
 

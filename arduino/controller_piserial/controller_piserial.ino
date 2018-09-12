@@ -12,8 +12,10 @@
 #define lockRelayButton 6
 #define lightRelay 7
 #define rangeTestPin 8
-#define xbeeRx 11
-#define xbeeTx 12
+//#define xbeeRx 11
+//#define xbeeTx 12
+#define piRx 11
+#define piTx 12
 #define ledPin 13
 
 bool connectionStatus = false;  // Becomes true after successfully pinging repeater
@@ -33,7 +35,10 @@ bool lightState; bool lightStateLast;
 bool doorLock = false; bool doorLockLast = doorLock;
 bool buttonLock = false; bool buttonLockLast = buttonLock;
 
-SoftwareSerial XBee(xbeeRx, xbeeTx);
+// Variables that need to be communicated in real-time
+
+//SoftwareSerial XBee(xbeeRx, xbeeTx);
+SoftwareSerial piSerial(piRx, piTx);
 
 void setup() {
   pinMode(lockRelayDoor, OUTPUT); digitalWrite(lockRelayDoor, LOW);
@@ -50,7 +55,7 @@ void setup() {
   pinMode(rangeTestPin, INPUT_PULLUP);
 
   Serial.begin(19200);
-  XBee.begin(19200);
+  piSerial.begin(19200);
 
   // Read initial values of device-specific variables
   readDoorState();
@@ -85,13 +90,13 @@ void loop() {
 
   else {
     if (checkRequired == false) {
-      if (XBee.available()) {
-        char c = XBee.read();
+      if (piSerial.available()) {
+        char c = piSerial.read();
         if (c == '@') {
           String commandString = String(c);
           bool validCommand = false;
-          while (XBee.available()) {
-            c = XBee.read();
+          while (piSerial.available()) {
+            c = piSerial.read();
             commandString += c;
             if (c == '^') {
               validCommand = true;
@@ -137,8 +142,8 @@ bool pingRepeater() {
 
   if (messageWaiting == true) {
     String pingMessage = "";
-    while (XBee.available()) {
-      char c = XBee.read();
+    while (piSerial.available()) {
+      char c = piSerial.read();
       pingMessage += c;
       delay(SERIAL_DELAY);
     }
@@ -203,12 +208,12 @@ void checkChange() {
 
 void makeRequest(String requestType) {
   // Send settings request command to controller
-  XBee.print("^#request/" + requestType + "#@\n");
+  piSerial.print("^#request/" + requestType + "#@\n");
 }
 
 void reportChange(String var, bool val) {
   String reportMessage = "^%" + var + "$" + String(val) + "@\n";
-  XBee.print(reportMessage);
+  piSerial.print(reportMessage);
 }
 
 void processCommand(String command) {
@@ -307,8 +312,8 @@ bool waitReceive(int timeout) {
   bool receiveSuccess = true;
 
   unsigned long waitStart = millis();
-  if (!XBee.available()) {
-    while (!XBee.available()) {
+  if (!piSerial.available()) {
+    while (!piSerial.available()) {
       if ((millis() - waitStart) > timeout) {
         receiveSuccess = false;
         break;
@@ -323,9 +328,9 @@ bool waitReceive(int timeout) {
 }
 
 void flushBuffer() {
-  if (XBee.available()) {
-    while (XBee.available()) {
-      char c = XBee.read();
+  if (piSerial.available()) {
+    while (piSerial.available()) {
+      char c = piSerial.read();
       delay(SERIAL_DELAY);
     }
   }

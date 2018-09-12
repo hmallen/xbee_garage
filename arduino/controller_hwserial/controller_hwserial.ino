@@ -1,5 +1,6 @@
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 
+#define SERIAL_BAUD 115200
 #define SERIAL_DELAY 5
 
 #define lightSensor A0
@@ -12,8 +13,10 @@
 #define lockRelayButton 6
 #define lightRelay 7
 #define rangeTestPin 8
-#define xbeeRx 11
-#define xbeeTx 12
+//#define xbeeRx 11
+//#define xbeeTx 12
+//#define piRx 11
+//#define piTx 12
 #define ledPin 13
 
 bool connectionStatus = false;  // Becomes true after successfully pinging repeater
@@ -33,7 +36,8 @@ bool lightState; bool lightStateLast;
 bool doorLock = false; bool doorLockLast = doorLock;
 bool buttonLock = false; bool buttonLockLast = buttonLock;
 
-SoftwareSerial XBee(xbeeRx, xbeeTx);
+//SoftwareSerial XBee(xbeeRx, xbeeTx);
+//SoftwareSerial piSerial(piRx, piTx);
 
 void setup() {
   pinMode(lockRelayDoor, OUTPUT); digitalWrite(lockRelayDoor, LOW);
@@ -49,8 +53,8 @@ void setup() {
 
   pinMode(rangeTestPin, INPUT_PULLUP);
 
-  Serial.begin(19200);
-  XBee.begin(19200);
+  //UNUSED.begin(19200);
+  Serial.begin(SERIAL_BAUD);
 
   // Read initial values of device-specific variables
   readDoorState();
@@ -59,9 +63,9 @@ void setup() {
   lightStateLast = lightState;
   //readGasSensors();
 
-  Serial.print(F("Flushing buffer..."));
+  //UNUSED.print(F("Flushing buffer..."));
   flushBuffer();
-  Serial.println(F("complete."));
+  //UNUSED.println(F("complete."));
 
   connectionStatus = pingRepeater();
 
@@ -75,23 +79,23 @@ void loop() {
   if (connectionStatus == false) {
     delay(10000);
 
-    Serial.print(F("Flushing buffer..."));
+    //UNUSED.print(F("Flushing buffer..."));
     flushBuffer();
-    Serial.println(F("complete."));
+    //UNUSED.println(F("complete."));
 
-    Serial.println(F("No connection established. Pinging repeater."));
+    //UNUSED.println(F("No connection established. Pinging repeater."));
     connectionStatus = pingRepeater();
   }
 
   else {
     if (checkRequired == false) {
-      if (XBee.available()) {
-        char c = XBee.read();
+      if (Serial.available()) {
+        char c = Serial.read();
         if (c == '@') {
           String commandString = String(c);
           bool validCommand = false;
-          while (XBee.available()) {
-            c = XBee.read();
+          while (Serial.available()) {
+            c = Serial.read();
             commandString += c;
             if (c == '^') {
               validCommand = true;
@@ -99,23 +103,23 @@ void loop() {
             }
             delay(SERIAL_DELAY);
           }
-          Serial.print(F("commandString: ")); Serial.println(commandString);
-          Serial.print(F("validCommand: ")); Serial.println(validCommand);
+          //UNUSED.print(F("commandString: ")); //UNUSED.println(commandString);
+          //UNUSED.print(F("validCommand: ")); //UNUSED.println(validCommand);
           if (validCommand == true) processCommand(commandString);
         }
       }
 
       else if ((millis() - sensorReadLast) > sensorReadInterval) {
-        Serial.print(F("Reading sensor data..."));
+        //UNUSED.print(F("Reading sensor data..."));
         sensorReadLast = millis();
-        Serial.println(F("complete."));
+        //UNUSED.println(F("complete."));
       }
 
       else if ((millis() - updateLast) > updateInterval) {
-        Serial.print(F("Sending data update for all variables..."));
+        //UNUSED.print(F("Sending data update for all variables..."));
         sendUpdate("all");
         updateLast = millis();
-        Serial.println(F("complete."));
+        //UNUSED.println(F("complete."));
       }
     }
     checkChange();  // Check for local variable changes and update OpenHAB if necessary
@@ -128,7 +132,7 @@ void loop() {
 bool pingRepeater() {
   bool connectionValid = false;
 
-  Serial.println(F("Pinging repeater."));
+  //UNUSED.println(F("Pinging repeater."));
 
   makeRequest("ping");
   unsigned long pingStart = millis();
@@ -137,15 +141,15 @@ bool pingRepeater() {
 
   if (messageWaiting == true) {
     String pingMessage = "";
-    while (XBee.available()) {
-      char c = XBee.read();
+    while (Serial.available()) {
+      char c = Serial.read();
       pingMessage += c;
       delay(SERIAL_DELAY);
     }
-    Serial.print(F("pingMessage: ")); Serial.println(pingMessage);
+    //UNUSED.print(F("pingMessage: ")); //UNUSED.println(pingMessage);
     if (pingMessage == "@#ping#^") {
       connectionValid = true;
-      Serial.print(F("Ping (ms): ")); Serial.println(pingDuration);
+      //UNUSED.print(F("Ping (ms): ")); //UNUSED.println(pingDuration);
     }
   }
   else printError("Timeout", "pingRepeater()");
@@ -203,24 +207,24 @@ void checkChange() {
 
 void makeRequest(String requestType) {
   // Send settings request command to controller
-  XBee.print("^#request/" + requestType + "#@\n");
+  Serial.print("^#request/" + requestType + "#@\n");
 }
 
 void reportChange(String var, bool val) {
   String reportMessage = "^%" + var + "$" + String(val) + "@\n";
-  XBee.print(reportMessage);
+  Serial.print(reportMessage);
 }
 
 void processCommand(String command) {
   char separator = command.charAt(1);
-  Serial.print(F("separator: ")); Serial.println(separator);
+  //UNUSED.print(F("separator: ")); //UNUSED.println(separator);
 
   // Variable Update
   if (separator == '%') {
     String var = command.substring((command.indexOf('%') + 1), command.indexOf('$'));
-    Serial.print(F("var: ")); Serial.println(var);
+    //UNUSED.print(F("var: ")); //UNUSED.println(var);
     String val = command.substring((command.indexOf('$') + 1), command.indexOf('^'));
-    Serial.print(F("val: ")); Serial.println(val);
+    //UNUSED.print(F("val: ")); //UNUSED.println(val);
     updateVariable(var, val);
   }
 
@@ -232,7 +236,7 @@ void processCommand(String command) {
     else {
       responseType = command.substring((command.indexOf('#') + 1), command.lastIndexOf('#'));
     }
-    Serial.print(F("responseType: ")); Serial.println(responseType);
+    //UNUSED.print(F("responseType: ")); //UNUSED.println(responseType);
 
     if (responseType == "ping") printError("Unrequested ping", "processCommand()");
   }
@@ -240,9 +244,9 @@ void processCommand(String command) {
   else if (separator == '>') {
     //String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('^'));
     String actionTarget = command.substring((command.indexOf('>') + 1), command.indexOf('<'));
-    Serial.print(F("actionTarget: ")); Serial.println(actionTarget);
+    //UNUSED.print(F("actionTarget: ")); //UNUSED.println(actionTarget);
     String actionCommand = command.substring((command.indexOf('<') + 1), command.indexOf('^'));
-    Serial.print(F("actionCommand: ")); Serial.println(actionCommand);
+    //UNUSED.print(F("actionCommand: ")); //UNUSED.println(actionCommand);
 
     if (actionTarget.length() > 0 && actionCommand.length() > 0) {
       if (actionTarget == "door" || actionTarget == "light") {
@@ -307,8 +311,8 @@ bool waitReceive(int timeout) {
   bool receiveSuccess = true;
 
   unsigned long waitStart = millis();
-  if (!XBee.available()) {
-    while (!XBee.available()) {
+  if (!Serial.available()) {
+    while (!Serial.available()) {
       if ((millis() - waitStart) > timeout) {
         receiveSuccess = false;
         break;
@@ -323,14 +327,14 @@ bool waitReceive(int timeout) {
 }
 
 void flushBuffer() {
-  if (XBee.available()) {
-    while (XBee.available()) {
-      char c = XBee.read();
+  if (Serial.available()) {
+    while (Serial.available()) {
+      char c = Serial.read();
       delay(SERIAL_DELAY);
     }
   }
 }
 
 void printError(String errorType, String errorFunction) {
-  Serial.println(errorType + " in " + errorFunction + ".");
+  //UNUSED.println(errorType + " in " + errorFunction + ".");
 }
