@@ -69,6 +69,7 @@ collections = {
 
 garage_state = {
     'doorState': None,
+    'lightState': None,
     'doorLock': None,
     'buttonLock': None,
     'doorAlarm': None,
@@ -80,9 +81,9 @@ garage_state = {
 def on_connect(mqtt_client, userdata, flags, rc):
     logger.debug('Connected with result code: ' + str(rc))
     mqtt_client.subscribe('$sys/#')
-    #mqtt_client.subscribe(mqtt_topics)
-    for topic in mqtt_topics:
-        mqtt_client.subscribe(topic)
+    mqtt_client.subscribe(mqtt_topics)
+    #for topic in mqtt_topics:
+        #mqtt_client.subscribe(topic)
 
 
 def on_disconnect(mqtt_client, userdata, rc):
