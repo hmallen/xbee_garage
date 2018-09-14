@@ -55,8 +55,8 @@ void setup() {
   // Read initial values of device-specific variables
   readDoorState();
   doorStateLast = doorState;
-  readLightState();
-  lightStateLast = lightState;
+  //readLightState();
+  //lightStateLast = lightState;
   //readGasSensors();
 
   Serial.print(F("Flushing buffer..."));
@@ -120,7 +120,7 @@ void loop() {
     }
     checkChange();  // Check for local variable changes and update OpenHAB if necessary
   }
-  readLightState();
+  //readLightState();
 
   delay(100);
 }
@@ -183,10 +183,12 @@ void checkChange() {
     reportChange("doorState", doorState);
     doorStateLast = doorState;
   }
+  /*
   if (lightState != lightStateLast) {
     reportChange("lightState", lightState);
     lightStateLast = lightState;
   }
+  */
   if (doorLock != doorLockLast) {
     triggerAction("doorLock", doorLock);
     reportChange("doorLock", doorLock);
