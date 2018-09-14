@@ -285,7 +285,7 @@ if __name__ == '__main__':
     # Initialize clients
     db = MongoClient(mongo_uri)[mongo_db]
 
-    mqtt_client = mqtt.Client(client_id=mqtt_client_id)
+    mqtt_client = mqtt.Client(clean_session=True) # client_id=mqtt_client_id)
     mqtt_client.enable_logger()
     mqtt_client.on_connect = on_connect
     mqtt_client.on_disconnect = on_disconnect
@@ -293,7 +293,7 @@ if __name__ == '__main__':
     mqtt_client.on_unsubscribe = on_unsubscribe
     mqtt_client.on_message = on_message
     mqtt_client.on_publish = on_publish
-    mqtt_client.connect(mqtt_url, port=mqtt_port, keepalive=mqtt_keepalive)
+    mqtt_client.connect(mqtt_url, port=mqtt_port) # , keepalive=mqtt_keepalive)
 
     ser = serial.Serial(
         port=serial_device,
