@@ -147,7 +147,7 @@ def publish_update(update_var, update_val):
         topic += update_var
         logger.debug('topic: ' + topic)
 
-        if update_val == 0:
+        if update_val == '0':
             if 'sensors' in topic:
                 update_str = 'OPEN'
             else:
