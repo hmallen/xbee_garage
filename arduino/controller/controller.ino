@@ -253,7 +253,7 @@ void processCommand(String command) {
     //UNUSED.print(F("actionCommand: ")); //UNUSED.println(actionCommand);
 
     if (actionTarget.length() > 0 && actionCommand.length() > 0) {
-      if (actionTarget == "door" || actionTarget == "light") triggerAction(actionTarget, true);
+      if (actionTarget == "doorTrigger" || actionTarget == "lightTrigger") triggerAction(actionTarget, true);
       else if (actionTarget == "doorLock" || actionTarget == "buttonLock") updateVariable(actionTarget, actionCommand);
       else printError("Invalid actionTarget", "processCommand()");
     }
@@ -274,12 +274,12 @@ void updateVariable(String var, String val) {
 }
 
 void triggerAction(String target, bool action) {
-  if (target == "door") {
+  if (target == "doorTrigger") {
     digitalWrite(doorRelay, HIGH);
     delay(250);
     digitalWrite(doorRelay, LOW);
   }
-  else if (target == "light") {
+  else if (target == "lightTrigger") {
     digitalWrite(lightRelay, HIGH);
     delay(250);
     digitalWrite(lightRelay, LOW);
