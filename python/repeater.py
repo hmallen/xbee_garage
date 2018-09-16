@@ -167,28 +167,18 @@ def publish_update(update_var, update_val):
 
 
 ## Other Functions ##
-def trigger_action(target, action=None, source='@'):
-    action_message = ''
-
-    if action != None:
-        for boolean_key in boolean_reference:
-            if action in boolean_reference[boolean_key]:
-                action_conv = int(boolean_key)
-                break
-        else:
-            logger.error('Unrecognized action passed to trigger_action().')
-            action_conv = -1
-
-    if action_conv >= 0:
-        action_message = source + ">" + target + "<" + action_conv + "^"
-        logger.debug('action_message: ' + action_message)
-
-    if len(action_message) > 3:
-        logger.info('Sending action trigger command.')
-        bytes_written = ser.write(action_message.encode('utf-8'))
-        logger.debug('bytes_written: ' + str(bytes_written))
+def trigger_action(target, action, source='@'):
+    if action == True:
+        action_conv = '1'
     else:
-        logger.warning('Command not sent due to error.')
+        action_conv = '0'
+
+    action_message = source + ">" + target + "<" + action_conv + "^"
+    logger.debug('action_message: ' + action_message)
+
+    logger.info('Sending action trigger command.')
+    bytes_written = ser.write(action_message.encode('utf-8'))
+    logger.debug('bytes_written: ' + str(bytes_written))
 
 
 def process_message(msg):
