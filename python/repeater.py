@@ -24,13 +24,13 @@ mqtt_url = config['mqtt']['url']
 logger.debug('mqtt_url: ' + mqtt_url)
 mqtt_port = int(config['mqtt']['port'])
 logger.debug('mqtt_port: ' + str(mqtt_port))
-mqtt_keepalive = int(config['mqtt']['keepalive'])
+mqtt_keepalive = 1  #int(config['mqtt']['keepalive'])
 logger.debug('mqtt_keepalive: ' + str(mqtt_keepalive))
-mqtt_username = config['mqtt']['username']
+mqtt_username = '' #config['mqtt']['username']
 logger.debug('mqtt_username: ' + mqtt_username)
-mqtt_password = config['mqtt']['password']
+mqtt_password = '' #config['mqtt']['password']
 logger.debug('mqtt_password: ' + mqtt_password)
-mqtt_client_id = config['mqtt']['client_id']
+mqtt_client_id = 'openhab' #config['mqtt']['client_id']
 logger.debug('mqtt_client_id: ' + mqtt_client_id)
 
 # mqtt_topics = ('OpenHab/#', 0)
@@ -123,7 +123,7 @@ def on_message(mqtt_client, userdata, msg):
         target_action = True
     logger.debug('target_action: ' + str(target_action))
 
-    logger.info('Triggering action. (' + target_var + '/' + target_action + ')')
+    logger.info('Triggering action. (' + target_var + '/' + str(target_action) + ')')
     trigger_action(target_var, target_action)
 
 
